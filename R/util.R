@@ -151,6 +151,59 @@ getFunctionalProbes <- function(gene, probes, MET_matrix, MET_Control, exp, meth
   return(dataDEGs)
 }
 
+# splitmatix
+# @param x A matrix
+# @param by A character specify if split the matrix by row or column.
+# @return A list each of which is the value of each row/column in the matrix.
+splitmatrix <- function(x,by="row") {
+  if(by %in% "row"){
+    out <- split(x, rownames(x))
+  }else if (by %in% "col"){
+    out <- split(x, colnames(x))
+  }
+  return(out)
+}
+
+get.chromosome <- function(genes, genome){
+  gene.annotation = as.data.frame(getTSS(genome))
+  gene.annotation = distinct(gene.annotation[,c("external_gene_name", "seqnames")])
+  gene.annotation = gene.annotation[which(gene.annotation$external_gene_name %in% genes),]
+  colnames(gene.annotation) = c("Gene", "Chr")
+  return(gene.annotation)
+}
+
+get.perm.pVals <- function(target.probe,
+                           MET_matrix,
+                           gene.expression.data,
+                           ProbeAnnotation,
+                           genome = "hg38",
+                           correlation = "negative"){
+
+  target.chr = as.character(seqnames(ProbeAnnotation)[which(names(ProbeAnnotation) == target.probe)])
+  all.genes = rownames(gene.expression.data)
+  gene.chr = get.chromosome(all.genes, genome)
+  random.genes = sample(gene.chr$Gene[which(!gene.chr$Chr %in% c(target.chr, "chrX", "chrY"))], 1000)
+  Exps = gene.expression.data[random.genes, ]
+  DM_values = MET_matrix[target.probe, ] # a single-row vector with the names as sample names, and the values as DM values
+  high.met.samples = which(DM_values == max(DM_values))
+  low.met.samples = which(DM_values == min(DM_values))
+  test.p <- unlist(lapply(splitmatrix(Exps),
+                          function(x) {
+                            wilcox.test(x[low.met.samples],
+                                        x[high.met.samples],
+                                        alternative = ifelse(correlation == "negative","greater","less"),
+                                        exact = FALSE)$p.value
+                          }
+
+  ))
+  test.p <- data.frame(GeneID=random.genes,
+                       Perm.p=test.p[match(random.genes, names(test.p))],
+                       stringsAsFactors = FALSE)
+}
+
+
+
+
 #' The getFunctionalGenes function
 #' @description  Helper function to assess if the methylation of a probe is reversely correlated with the expression of its nearby genes.
 #' @details This function is probe-centered, which is used in the enhancer mode and the miRNA mode of EpiMix.
@@ -161,7 +214,14 @@ getFunctionalProbes <- function(gene, probes, MET_matrix, MET_Control, exp, meth
 #' @param state character string indicating the methylation state of the probe, should be either "Hyper", "Hypo" or "Dual".
 #' @return dataframe with functional probe-gene pair and p values from the Wilcoxon test for methylation and gene expression.
 #'
-getFunctionalGenes <- function(target.probe, target.genes, MET_matrix, MET_Control, gene.expression.data, state,raw.pvalue.threshold = 0.05, adjusted.pvalue.threshold = 0.01){
+getFunctionalGenes <- function(target.probe,
+                               target.genes,
+                               MET_matrix,
+                               MET_Control,
+                               gene.expression.data,
+                               ProbeAnnotation,
+                               state,raw.pvalue.threshold = 0.05,
+                               adjusted.pvalue.threshold = 0.01){
   sample.number = ncol(MET_matrix)
   if(!is.null(MET_Control)){
     sample.number = ncol(MET_matrix) - length(intersect(colnames(MET_matrix), colnames(MET_Control)))
@@ -218,15 +278,58 @@ getFunctionalGenes <- function(target.probe, target.genes, MET_matrix, MET_Contr
                          State = rep(state,length(target.genes))
                          )
 
-  dataDEGs['Proportion of hypo (%)'] <- rep(hypo_prev, length(target.genes))
-  dataDEGs['Proportion of hyper (%)'] <- rep(hyper_prev, length(target.genes))
-  dataDEGs['Fold change of gene expression'] <- mRNA.fold.change
-  dataDEGs['Comparators'] <- comparisons
-  dataDEGs['Raw.p'] <- p
-  dataDEGs["Adjusted.p"] <- p.adjust(as.vector(unlist(dataDEGs['Raw.p'])), method='fdr')
+  # find the permutation p values of this probe
+  perm.pvals = get.perm.pVals(target.probe,
+                              MET_matrix,
+                              gene.expression.data,
+                              ProbeAnnotation,
+                              genome = "hg38",
+                              correlation = "negative")
+
+  dataDEGs['Proportion of hypo (%)'] = rep(hypo_prev, length(target.genes))
+  dataDEGs['Proportion of hyper (%)'] = rep(hyper_prev, length(target.genes))
+  dataDEGs['Fold change of gene expression'] = mRNA.fold.change
+  dataDEGs['Comparators'] = comparisons
+  dataDEGs['Raw.p'] = p
+  dataDEGs = Get.Pvalue.p(dataDEGs, perm.pvals)
+  #dataDEGs["Adjusted.p"] <- p.adjust(as.vector(unlist(dataDEGs['Raw.p'])), method='fdr')
   dataDEGs <- dataDEGs[which(dataDEGs$Raw.p<raw.pvalue.threshold & dataDEGs$Adjusted.p < adjusted.pvalue.threshold),]
   return(dataDEGs)
 }
+
+#' Calculate empirical Pvalue
+#' @param U.matrix A data.frame of raw pvalue from U test. Output from .Stat.nonpara
+#' @param permu data frame of permutation. Output from .Stat.nonpara.permu
+#' @return A data frame with empirical Pvalue.
+Get.Pvalue.p <- function(U.matrix, permu){
+  .Pvalue <- function(x,permu){
+    Gene <- as.character(x["Gene"])
+    Raw.p <- as.numeric(x["Raw.p"])
+    if(is.na(Raw.p)){
+      out <- NA
+    } else {
+      #       num( Pp <= Pr) + 1
+      # Pe = ---------------------
+      #            x + 1
+      # Pp = pvalue probe (Raw.p)
+      # Pr = pvalue random probe (permu matrix)
+      # We have to consider that floating Point Numbers are Inaccurate
+      out <- (sum(permu$Perm.p - Raw.p < 10^-100, na.rm=TRUE) + 1) / (sum(!is.na(permu$Perm.p)) + 1)
+    }
+    return(out)
+  }
+  message("Calculating empirical P value.\n")
+  Pvalue <- unlist(apply(U.matrix,1,.Pvalue,permu=permu))
+  U.matrix$Adjusted.p <- Pvalue
+  return(U.matrix)
+}
+
+
+
+
+
+
+
 
 #' The filterMethMatrix function
 #' @details This function filters methylation states from the beta mixture modeling for each probe. The filtered probes can be used to model gene expression by Wilcoxon test.

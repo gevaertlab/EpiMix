@@ -589,7 +589,14 @@ EpiMix <- function(methylation.data,
           target.genes =  NearbyGenes$Symbol[which(NearbyGenes$ID == target.probe)]
           target.genes = intersect(target.genes, rownames(gene.expression.data))
           if (length(target.genes)==0) next()
-          pairs = getFunctionalGenes(target.probe, target.genes, MET_matrix, MET_Control, gene.expression.data, state, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
+          pairs = getFunctionalGenes(target.probe,
+                                     target.genes,
+                                     MET_matrix,
+                                     MET_Control,
+                                     gene.expression.data,
+                                     state, ProbeAnnotation,
+                                     raw.pvalue.threshold = raw.pvalue.threshold,
+                                     adjusted.pvalue.threshold = adjusted.pvalue.threshold)
           FunctionalPairs = rbind(FunctionalPairs, pairs)
           setTxtProgressBar(pb,i)
         }
@@ -604,7 +611,13 @@ EpiMix <- function(methylation.data,
           target.genes = intersect(target.genes, rownames(gene.expression.data))
           if(length(target.genes)>0) {
             source("R/util.R")
-            getFunctionalGenes(target.probe, target.genes, MET_matrix, MET_Control, gene.expression.data, state, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
+            getFunctionalGenes(target.probe,
+                               target.genes,
+                               MET_matrix,
+                               MET_Control,
+                               gene.expression.data, state,
+                               ProbeAnnotation, raw.pvalue.threshold = raw.pvalue.threshold,
+                               adjusted.pvalue.threshold = adjusted.pvalue.threshold)
           }
         }
       }
