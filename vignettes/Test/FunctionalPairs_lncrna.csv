@@ -1,0 +1,6 @@
+"Gene","Probe","State","Proportion of hypo (%)","Proportion of hyper (%)","Fold change of gene expression","Comparators","Raw.p","Adjusted.p"
+"LINC00881","cg11931463","Hyper",0,12.073,0.58,"hyper vs normal",2.03862400588204e-08,3.05793600882306e-08
+"LINC00881","cg00673344","Hyper",0,7.289,0.332,"hyper vs normal",3.94428631921901e-11,1.1832858957657e-10
+"LINC00881","cg02551745","Dual",2.961,97.039,1.457,"hypo vs hyper",0.00289332618984918,0.00289332618984918
+"DIO3OS","cg16366843","Hyper",0,71.982,0.731,"hyper vs normal",2.81743245027086e-06,2.81743245027086e-06
+"DIO3OS","cg13126530","Hyper",0,61.503,0.677,"hyper vs normal",8.22424852675617e-10,1.64484970535123e-09

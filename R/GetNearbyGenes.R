@@ -1,3 +1,10 @@
+###################################################################################################################
+#                                  Functions to get adjacent genes of CpGs
+###################################################################################################################
+
+#'@importFrom dplyr slice left_join group_by_ full_join filter do
+NULL
+
 # NearGenes
 # @param Target A charactor which is name of TRange or one of rownames of TBed.
 # @param Gene A GRange object contains coordinates of promoters for human genome.
@@ -157,44 +164,40 @@ NearGenes <- function (Target = NULL,
 #' @references
 #' Yao, Lijing, et al. "Inferring regulatory element landscapes and transcription
 #' factor networks from cancer methylomes." Genome biology 16.1 (2015): 1.
-#' @examples
-#' \dontrun{
-#' geneAnnot <- getTSS(genome = "hg38")
-#' probe <- GenomicRanges::GRanges(seqnames = c("chr1","chr2"),
-#' range=IRanges::IRanges(start = c(16058489,236417627), end= c(16058489,236417627)),
-#' name= c("cg18108049","cg17125141"))
-#' names(probe) <- c("cg18108049","cg17125141")
-#' NearbyGenes <- GetNearGenes(numFlankingGenes = 20,geneAnnot=geneAnnot,TRange=probe)
-#' }
 GetNearGenes <- function(data = NULL,
                          probes = NULL,
                          geneAnnot = NULL,
                          TRange = NULL,
                          numFlankingGenes = 20){
   message("Searching for the ", numFlankingGenes, " near genes")
-  if(!is.null(data)){
-    if(is.null(probes)) stop("Please set the probes argument (names of probes to select nearby genes)")
-    TRange <- subset(getMet(data), rownames(getMet(data)) %in% probes)
-    geneAnnot <- getExp(data)
-  }
+  # Comment out the original part from the ELMER function, since EpiMix does not use this condition
+
+  # if(!is.null(data)){
+  #   if(is.null(probes)) stop("Please set the probes argument (names of probes to select nearby genes)")
+  #   TRange <- subset(getMet(data), rownames(getMet(data)) %in% probes)
+  #   geneAnnot <- getExp(data)
+  # }
   if(is.null(TRange)){
     stop("TRange must be defined")
   }
   tssAnnot <- NULL
-  if(is.null(geneAnnot)){
-    if("genome" %in% names(metadata(data))){
-      genome <- metadata(data)$genome
-      tssAnnot <- getTSS(genome = genome)
-      geneAnnot <- get.GRCh(genome = genome,as.granges = TRUE)
-    }
-  }
 
-  if(class(TRange) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
-    TRange <- rowRanges(TRange)
-  }
-  if(class(geneAnnot) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
-    geneAnnot <- rowRanges(geneAnnot)
-  }
+  # Comment out the original portion of code from ELMER, since EpiMix does not use this
+
+  # if(is.null(geneAnnot)){
+  #   if("genome" %in% names(metadata(data))){
+  #     genome <- metadata(data)$genome
+  #     tssAnnot <- getTSS(genome = genome)
+  #     geneAnnot <- get.GRCh(genome = genome,as.granges = TRUE)
+  #   }
+  # }
+
+  # if(class(TRange) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
+  #   TRange <- rowRanges(TRange)
+  # }
+  # if(class(geneAnnot) == class(as(SummarizedExperiment(),"RangedSummarizedExperiment"))){
+  #   geneAnnot <- rowRanges(geneAnnot)
+  # }
 
   if(is.null(names(TRange))) {
     if(is.null(TRange$name)) stop("No probe names found in TRange")
@@ -219,16 +222,6 @@ GetNearGenes <- function(data = NULL,
 #' @param cores Number fo cores to be used. Deafult: 1
 #' @param met.platform DNA methyaltion platform to retrieve data from: EPIC or 450K (default)
 #' @param genome Which genome build will be used: hg38 (default) or hg19.
-#' @examples
-#' \dontrun{
-#'  data <- ELMER:::getdata("elmer.data.example")
-#'  NearbyGenes <- GetNearGenes(
-#'   data = data,
-#'   probes = c("cg15924102", "cg24741609"),
-#'   numFlankingGenes = 20
-#'  )
-#'  NearbyGenes <- addDistNearestTSS(data = data, NearGenes = NearbyGenes)
-#' }
 addDistNearestTSS <- function(
   data,
   NearGenes,
@@ -246,7 +239,8 @@ addDistNearestTSS <- function(
 
   # For a given probe/region and gene find nearest TSS distance
   if(!missing(data)){
-    tss <- getTSS(metadata(data)$genome)
+    # Comment out the original portion of code from ELMER, since EpiMix does not use this
+    #tss <- getTSS(metadata(data)$genome)
   } else {
     tss <- getTSS(genome = genome)
   }
@@ -256,9 +250,10 @@ addDistNearestTSS <- function(
   # If our input has the probe names we will have to recover the probe metadata to map.
   region <- FALSE
   if(!missing(data)){
-    met <- rowRanges(getMet(data))
+    # Comment out the original portion from ELMER, since EpiMix does not use this function
+    #met <- rowRanges(getMet(data))
   } else if(!missing(met.platform)){
-    met <- getInfiniumAnnotation(plat = met.platform, genome = genome)
+    met <- EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
   } else {
     region <- TRUE
     met <- NearGenes %>% tidyr::separate("Target", c("seqnames","start","end"),
@@ -288,21 +283,6 @@ addDistNearestTSS <- function(
 #' @param TRange Genomic coordinates for Tartget region
 #' @param tssAnnot TSS annotation
 #' @importFrom dplyr slice left_join group_by_
-#' @examples
-#' \dontrun{
-#'  data <- ELMER:::getdata("elmer.data.example")
-#'   NearbyGenes <- GetNearGenes(
-#'     data = data,
-#'     probes = c("cg15924102", "cg24741609"),
-#'     numFlankingGenes = 20
-#'  )
-#'
-#'   NearbyGenes <- ELMER:::calcDistNearestTSS(
-#'        links = NearbyGenes,
-#'        tssAnnot =  getTSS(genome = "hg38"),
-#'        TRange = rowRanges(getMet(data))
-#'   )
-#' }
 #' @author Tiago C. Silva
 calcDistNearestTSS <- function(
   links,
@@ -365,7 +345,7 @@ calcDistNearestTSS <- function(
 
   ret <- merged %>%
     dplyr::group_by(.data$ID,.data$ensembl_gene_id) %>%
-    dplyr::slice(which.min(DistanceTSS))
+    dplyr::slice(which.min(.data$DistanceTSS))
 
   #ret <- ret[match(links %>% tidyr::unite(ID,Target,GeneID) %>% pull(ID),
   #          ret %>% tidyr::unite(ID,Target,GeneID) %>% pull(ID)),]
@@ -388,20 +368,9 @@ calcDistNearestTSS <- function(
 #' @param TRange A GRange object contains coordinate of targets.
 #' @return A data frame of nearby genes and information: genes' IDs, genes' symbols,
 # distance with target and side to which the gene locate to the target.
-#' @examples
-#' geneAnnot <-  ELMER:::get.GRCh("hg38",as.granges = TRUE)
-#' tssAnnot <-  getTSS(genome = "hg38")
-#' probe <- GenomicRanges::GRanges(seqnames = c("chr1","chr2"),
-#' range=IRanges::IRanges(start = c(16058489,236417627), end= c(16058489,236417627)),
-#' name= c("cg18108049","cg17125141"))
-#' names(probe) <- c("cg18108049","cg17125141")
-#' NearbyGenes <- getRegionNearGenes(numFlankingGenes = 20,
-#'                              geneAnnot = geneAnnot,
-#'                              TRange = probe,
-#'                              tssAnnot = tssAnnot)
 #' @importFrom GenomicRanges nearest precede follow
 #' @importFrom tibble as_tibble
-#' @importFrom dplyr group_by do
+#' @importFrom dplyr group_by do filter
 #' @importFrom progress progress_bar
 #' @author
 #' Tiago C Silva (maintainer: tiagochst@usp.br)
@@ -556,7 +525,7 @@ getRegionNearGenes <- function(TRange = NULL,
     if (nrow(out) < numFlankingGenes) {
       if (paste0("R", floor(numFlankingGenes / 2)) %in% out$Side) {
         cts <- length(grep("L", sort(x$Side), value = TRUE))
-        out <- x %>% dplyr::filter(Side %in% c(paste0("R", 1:(numFlankingGenes - cts)),
+        out <- x %>% dplyr::filter(x$Side %in% c(paste0("R", 1:(numFlankingGenes - cts)),
                                                grep("L", sort(out$Side), value = TRUE)))
       } else {
         cts <- length(grep("R", sort(x$Side), value = TRUE))
@@ -569,7 +538,7 @@ getRegionNearGenes <- function(TRange = NULL,
     out <- out[order(out$Distance), ]
     return(out)
   }
-  ret <- ret %>% group_by(ID) %>% do(f(.))
+  ret <- ret %>% group_by(.data$ID) %>% do(f(.))
 
   if (!is.null(tssAnnot)) {
     message("Calculating distance to nearest TSS")
@@ -599,12 +568,6 @@ getRegionNearGenes <- function(TRange = NULL,
 #'  When upstream and downstream is specified, coordinates of promoter regions with gene annotation will be generated.
 #' @param genome Which genome build will be used: hg38 (default) or hg19.
 #' @return GENCODE gene annotation if TSS is not specified. Coordinates of GENCODE gene promoter regions if TSS is specified.
-#' @examples
-#' # get GENCODE gene annotation (transcripts level)
-#' \dontrun{
-#'     getTSS <- getTSS()
-#'     getTSS <- getTSS(genome.build = "hg38", TSS=list(upstream=1000, downstream=1000))
-#' }
 #' @author Lijing Yao (maintainer: lijingya@usc.edu)
 #' @import GenomeInfoDb
 #' @importFrom GenomicFeatures transcripts
@@ -680,17 +643,7 @@ getdata <- function(...)
 #'                           TSS,
 #'                           TSS.range = list(upstream = 2000, downstream = 2000),
 #'                           promoter = FALSE, rm.chr = NULL)
-#' @examples
-#' # get distal enhancer probe
-#' \dontrun{
-#' Probe <- get.feature.probe()
-#' }
-#' # get promoter probes
-#' \dontrun{
-#' Probe <- get.feature.probe(promoter=FALSE)
-#' }
-#' # get distal enhancer probe remove chrX chrY
-#' Probe2 <- get.feature.probe(rm.chr=c("chrX", "chrY"))
+#'
 get.feature.probe <- function(feature = NULL,
                               TSS,
                               genome = "hg38",

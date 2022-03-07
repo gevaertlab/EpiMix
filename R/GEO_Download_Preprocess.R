@@ -1,3 +1,16 @@
+###################################################################################################################
+#                                  Functions to download methylation and gene expression data from GEO
+###################################################################################################################
+#'@importFrom Biobase exprs pData phenoData
+NULL
+
+#' @importFrom GEOquery getGEO
+NULL
+
+#' @importFrom biomaRt useDataset getBM
+NULL
+
+
 #' The GEO_Download_DNAmethylation function
 #' @description Download the methylation data and the associated sample phenotypic data from the GEO database.
 #' @param AccessionID character string indicating GEO accession number. Currently support the GEO series (GSE) data type.
@@ -6,14 +19,6 @@
 #' @return a list with two elements. The first element ("$MethylationData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
 #' @export
 #' @keywords download
-#' @import GEOquery
-#' @examples
-#' \dontrun{
-    # targetDirectory <- paste0(getwd(), "/", "Data/GEO_Allergy")
-    # downloadData <- TRUE
-    # AccessionID <- "GSE114134"
-    # METdirectories <- GEO_Download_DNAMethylation(AccessionID, targetDirectory,DownloadData = downloadData)
-#' }
 
 GEO_Download_DNAMethylation <- function(AccessionID,targetDirectory = '.', DownloadData = TRUE) {
 
@@ -24,16 +29,16 @@ GEO_Download_DNAMethylation <- function(AccessionID,targetDirectory = '.', Downl
   if(DownloadData){
     cat("Downloading methylation data from GEO", AccessionID, "\n")
     dir.create(targetDirectory,showWarnings=FALSE)
-    all.data <- getGEO(GEO = AccessionID, destdir = targetDirectory)
-    expression.data <- exprs(all.data[[1]])
+    all.data <- GEOquery :: getGEO(GEO = AccessionID, destdir = targetDirectory)
+    expression.data <- Biobase :: exprs(all.data[[1]])
     if(nrow(expression.data) <=1){
       warning("The methylation data matrix has zero feature! Please check whether the actual data are only saved as a supplmentary file in the GEO database.\n In this case, you will have to manually download the data from the supplmentary files from GEO.\n")
     }
-    sample.metadata <-pData(phenoData(all.data[[1]]))
+    sample.metadata <- Biobase :: pData(Biobase :: phenoData(all.data[[1]]))
     cat("Saving methylation data into the target dirctory...\n")
     saveRDS(expression.data, dir_MET_data)
     cat("Saving sample phenotypic data into the target dirctory...\n")
-    write.csv(sample.metadata, file = gzfile(dir_Pheno_data))
+    utils :: write.csv(sample.metadata, file = gzfile(dir_Pheno_data))
     cat("Methylation data are saved at:",dir_MET_data, "\n")
     cat("Phenotypic data are saved at:", dir_Pheno_data, "\n")
   }
@@ -48,17 +53,8 @@ GEO_Download_DNAMethylation <- function(AccessionID,targetDirectory = '.', Downl
 #' @param targetDirectory character string indicting the file path to save the data. Default: '.' (current directory)
 #' @param DownloadData logical indicating whether the actual data should be downloaded (Default: TRUE). If False, the desired directory where the downloaded data should have been saved is returned.
 #' @return a list with two elements. The first element ("$GeneExpressionData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
-#' @import GEOquery
 #' @export
 #' @keywords download
-#' @examples
-#' \dontrun{
-# AccessionID <- "GSE114065"
-# targetDirectory <- paste0(getwd(), "/", "Data/GEO_Allergy")
-# downloadData <- TRUE
-# GEdirectories <- Download_GeneExpression(AccessionID, targetDirectory,DownloadData = downloadData)
-#' }
-#'
 
 GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', DownloadData = TRUE) {
 
@@ -70,17 +66,17 @@ GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', Downl
   if(DownloadData){
     cat("Downloading gene expression data from GEO", AccessionID, "\n")
     dir.create(targetDirectory,showWarnings=FALSE)
-    all.data <- getGEO(GEO = AccessionID, destdir = targetDirectory)
-    expression.data <- exprs(all.data[[1]])
+    all.data <- GEOquery :: getGEO(GEO = AccessionID, destdir = targetDirectory)
+    expression.data <- Biobase :: exprs(all.data[[1]])
     if(nrow(expression.data) <=1){
       warning("The gene expression data matrix has zero feature! Please check whether the actual data are only saved as a supplmentary file in the GEO database.\n In this case, you will have to manually download the data from the supplmentary files from GEO.\n")
     }
-    sample.metadata <-pData(phenoData(all.data[[1]]))
+    sample.metadata <- Biobase :: pData(Biobase :: phenoData(all.data[[1]]))
 
     cat("Saving gene expression data into the target dirctory...\n")
     saveRDS(expression.data, dir_expression_data)
     cat("Saving sample phenotypic data into the target dirctory...\n")
-    write.csv(sample.metadata, file = gzfile(dir_Pheno_data))
+    utils :: write.csv(sample.metadata, file = gzfile(dir_Pheno_data))
     cat("Gene expression data are saved at:", dir_expression_data, "\n")
     cat("Phenotypic data are saved at:", dir_Pheno_data, "\n")
   }
@@ -95,25 +91,7 @@ GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', Downl
 #' @param targetDirectory file path to save the output. Default: '.' (current directory)
 #' @return dataframe with three columns: $assay (character string indicating the type of the experiment, can be either "DNA methylation" or "Gene expression"), $primary(character string indicating the actual sample names), $colnames (character string indicating the actual column names for each samples in DNA methylation data and gene expression data)
 #' @export
-#' @examples
-#' \dontrun{
-#   targetDirectory <- paste0(getwd(), "/", "Data/GEO_Allergy")
-#   downloadData <- FALSE
-#   AccessionID <- "GSE114134"
-#   METdirectories <- GEO_Download_DNAMethylation(AccessionID, targetDirectory,DownloadData = downloadData)
-#   AccessionID <- "GSE114065"
-#   GEdirectories <-  GEO_Download_GeneExpression(AccessionID, targetDirectory,DownloadData = downloadData)
-#   sample.map = GEO_getSampleMap(METdirectories, GEdirectories, targetDirectory)
-#   #-----special case, only for the allergy dataset where the actual sample names in the methylation data and gene expression data are mismatched---------------
-#   sample.map$primary[which(sample.map$assay == "DNA methylation")] = gsub("\\.", "-",sample.map$primary[which(sample.map$assay == "DNA methylation")])
-#   if(targetDirectory!='' | !is.null(targetDirectory)) {
-#     cat("Saving the sample map to files...\n")
-#     write.csv(sample.map, paste0(targetDirectory,"/", "sample.map.csv"), row.names = FALSE)
-#     cat("Sample map has been saved to:", paste0(targetDirectory,"/", "sample.map.csv\n"))
-#   }
-#   #------------------------------------------------------------------------------------------------------------------------------------------------------------
-#' }
-#'
+
  GEO_getSampleMap <- function(METdirectories, GEdirectories, targetDirectory='.'){
 
   pData.met = METdirectories[[2]]
@@ -127,7 +105,7 @@ GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', Downl
   sample.map = rbind(sample_met, sample_exp)
   if(targetDirectory!='' | !is.null(targetDirectory)) {
     cat("Saving the sample map to files...\n")
-    write.csv(sample.map, paste0(targetDirectory,"/", "sample.map.csv"), row.names = FALSE)
+    utils :: write.csv(sample.map, paste0(targetDirectory,"/", "sample.map.csv"), row.names = FALSE)
     cat("Sample map has been saved to:", paste0(targetDirectory,"/", "sample.map.csv\n"))
   }
   overlapSamples = intersect(sample.map$primary[which(sample.map$assay == "DNA methylation")], sample.map$primary[which(sample.map$assay == "Gene expression")])
@@ -145,24 +123,6 @@ GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', Downl
 #' @param targetDirectory file path to save the output. Default: '.' (current directory)
 #' @return a dataframe with two columns: a "primary" column indicating the actual sample names, a "sample.type" column indicating the study group for each sample.
 #' @export
-#'
-#' @examples
-#' \dontrun{
-    # targetDirectory <- paste0(getwd(), "/", "Data/GEO_Allergy")
-    # downloadData <- FALSE
-    # AccessionID <- "GSE114134"
-    # METdirectories <- GEO_Download_DNAMethylation(AccessionID, targetDirectory,DownloadData = downloadData)
-    # group.column <- "allergy.status.ch1"
-    # sample.info <- GEO_GetSampleInfo(METdirectories, group.column, targetDirectory)
-    # #-----special case, only for the allergy dataset where the actual sample names in the methylation data and gene expression data are mismatched---------------
-    # sample.info$primary = gsub("\\.", "-",sample.info$primary)
-    # if(targetDirectory!='' | !is.null(targetDirectory)) {
-    #   cat("Saving the sample info to files...\n")
-    #   write.csv(sample.info, paste0(targetDirectory,"/", "sample.info.csv"), row.names = FALSE)
-    #   cat("Sample info has been saved to:", paste0(targetDirectory,"/", "sample.info.csv\n"))
-    # }
-    # #------------------------------------------------------------------------------------------------------------------------------------------------------------
-#' }
 
 GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = '.'){
   pData = METdirectories[[2]]
@@ -189,12 +149,12 @@ GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = '.
 #' (3) (optional) removing CpG probes on the sex chromosomes or the user-defined chromosomes.
 #' (4) (optional) doing Batch correction.
 #' If both sample.info and group.1 and group.2 information are provided, the function will perform missing value estimation and batch correction on group.1 and group.2 separately. This will ensure that the true difference between group.1 and group.2 will not be obscured by missing value estimation and batch correction.
-#' @param METdirectories a list of file paths to the downloaded methylation datasets. Can be the output from the GEO_Download_DNAMethylation function.
+#' @param methylation.data matrix of DNA methylation data with CpG in rows and sample names in columns.
 #' @param met.platform character string indicating the type of the Illumina Infinium BeadChip for collecting the methylation data. Should be either "HM450" or "EPIC". Default: "EPIC"
 #' @param genome character string indicating the genome build version for retrieving the probe annotation. Should be either "hg19" or "hg38". Default: "hg38".
-#' @param sample.info Dataframe that maps each sample to a study group. Should contain two columns: the first column (named: "primary") indicating the sample names, and the second column (named: "sample.type") indicating which study group each sample belongs to (e.g., “Experiment” vs. “Control”,  “Cancer” vs. “Normal”). Sample names in the "primary" column must coincide with the column names of the methylation.data. Please see details for more information. Default: NULL.
-#' @param group.1 Character vector indicating the name(s) for the experiment group. The values must coincide with the values in the "sample.type" of the sample.info dataframe.Please see details for more information. Default: NULL.
-#' @param group.2 Character vector indicating the names(s) for the control group. The values must coincide with the values in the "sample.type" of the sample.info dataframe. Please see details for more information. Default: NULL.
+#' @param sample.info dataframe that maps each sample to a study group. Should contain two columns: the first column (named: "primary") indicating the sample names, and the second column (named: "sample.type") indicating which study group each sample belongs to (e.g., “Experiment” vs. “Control”,  “Cancer” vs. “Normal”). Sample names in the "primary" column must coincide with the column names of the methylation.data. Please see details for more information. Default: NULL.
+#' @param group.1 character vector indicating the name(s) for the experiment group. The values must coincide with the values in the "sample.type" of the sample.info dataframe.Please see details for more information. Default: NULL.
+#' @param group.2 character vector indicating the names(s) for the control group. The values must coincide with the values in the "sample.type" of the sample.info dataframe. Please see details for more information. Default: NULL.
 #' @param sample.map dataframe for mapping the GEO accession ID (column names) to the actual sample names. Can be the output from the GEO_getSampleMap function. Default: NULL.
 #' @param rm.chr character vector indicating the probes on which chromosomes to be removed. Default: "chrX", "chrY".
 #' @param MissingValueThresholdGene threshold for missing values per gene. Genes with a percentage of NAs greater than this threshold are removed. Default: 0.3.
@@ -202,33 +162,12 @@ GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = '.
 #' @param doBatchCorrection logical indicating whether to perform batch correction. If TRUE, the batch data need to be provided.
 #' @param BatchData dataframe with batch information. Should contain two columns: the first column indicating the actual sample names, the second column indicating the batch. Users are expected to retrieve the batch information from the GEO on their own, but this can also be done using the GEO_getSampleInfo function with the "group.column" as the column indicating the batch for each sample. Defualt": NULL.
 #' @param batch.correction.method character string indicating the method that will be used for batch correction. Should be either "Seurat" or "Combat". Default: "Seurat".
+#' @param cores number of CPU cores to be used for batch effect correction. Defaut: 1.
 #' @return DNA methylation data matrix with probes in rows and samples in columns.
 #' @import doSNOW
 #' @import doParallel
 #' @export
 #' @keywords preprocess
-#' @examples
-#' \dontrun{
-# source("R/util.R")
-# targetDirectory <- paste0(getwd(), "/", "Data/GEO_Allergy")
-# downloadData <- FALSE
-# AccessionID <- "GSE114134"
-# METdirectories <- GEO_Download_DNAMethylation(AccessionID, targetDirectory,DownloadData = downloadData)
-# methylation.data = readRDS(METdirectories[[1]])
-# AccessionID <- "GSE114065"
-# GEdirectories <-  GEO_Download_GeneExpression(AccessionID, targetDirectory,DownloadData = downloadData)
-# sample.map = GEO_getSampleMap(METdirectories, GEdirectories, targetDirectory)
-# sample.map$primary[which(sample.map$assay == "DNA methylation")] = gsub("\\.", "-",sample.map$primary[which(sample.map$assay == "DNA methylation")])
-# if(targetDirectory!='' | !is.null(targetDirectory)) {
-#   cat("Saving the sample map to files...\n")
-#   write.csv(sample.map, paste0(targetDirectory,"/", "sample.map.csv"), row.names = FALSE)
-#   cat("Sample map has been saved to:", paste0(targetDirectory,"/", "sample.map.csv\n"))
-# }
-# met.platform = "EPIC"
-# genome = "hg38"
-# METProcessedData <- GEO_Preprocess_DNAMethylation(methylation.data, met.platform = met.platform, genome = genome, sample.map = sample.map)
-#' }
-#'
 
 GEO_Preprocess_DNAMethylation <- function(methylation.data,
                                           met.platform = "EPIC",
@@ -317,9 +256,9 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data,
     if(batch.correction.method == "Combat"){
       MinInBatch = 5
       if(cores > 1){
-        unregister()
+        #unregister()
         cat("Registering sockets on multiple CPU cores...\n")
-        cl <- makeCluster(cores)
+        cl <- parallel :: makeCluster(cores)
       }
     }
     cat("Performing batch correction on group.1...\n")
@@ -336,7 +275,7 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data,
       MET_Control[MET_Control<0]=0
       MET_Control[MET_Control>1]=1
     }
-    if(cores > 1 & batch.correction.method == "Combat") stopCluster(cl)
+    if(cores > 1 & batch.correction.method == "Combat") parallel :: stopCluster(cl)
   }
 
 
@@ -363,42 +302,20 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data,
 #' (3) mapping the column names of the gene expression data to the actual sample names based on the information from "sample.map".
 #' (4) doing batch correction.
 #'
-#' @param GEdirectories a list of the file paths to the downloaded gene expression datasets. Can be the output from the GEO_Download_GeneExpression function.
-#' @param sample.info Dataframe that maps each sample to a study group. Should contain two columns: the first column (named: "primary") indicating the sample names, and the second column (named: "sample.type") indicating which study group each sample belongs to (e.g., “Experiment” vs. “Control”,  “Cancer” vs. “Normal”). Sample names in the "primary" column must coincide with the column names of the methylation.data. Please see details for more information. Default: NULL.
-#' @param group.1 Character vector indicating the name(s) for the experiment group. The values must coincide with the values in the "sample.type" of the sample.info dataframe.Please see details for more information. Default: NULL.
-#' @param group.2 Character vector indicating the names(s) for the control group. The values must coincide with the values in the "sample.type" of the sample.info dataframe. Please see details for more information. Default: NULL.
+#' @param gene.expression.data a matrix of gene expression data with gene in rows and samples in columns.
+#' @param sample.info dataframe that maps each sample to a study group. Should contain two columns: the first column (named: "primary") indicating the sample names, and the second column (named: "sample.type") indicating which study group each sample belongs to (e.g., “Experiment” vs. “Control”,  “Cancer” vs. “Normal”). Sample names in the "primary" column must coincide with the column names of the methylation.data. Please see details for more information. Default: NULL.
+#' @param group.1 character vector indicating the name(s) for the experiment group. The values must coincide with the values in the "sample.type" of the sample.info dataframe.Please see details for more information. Default: NULL.
+#' @param group.2 character vector indicating the names(s) for the control group. The values must coincide with the values in the "sample.type" of the sample.info dataframe. Please see details for more information. Default: NULL.
 #' @param sample.map dataframe for mapping the GEO accession ID (column names) to the actual sample names. Can be the output from the GEO_getSampleMap function. Default: NULL.
 #' @param MissingValueThresholdGene threshold for missing values per gene. Genes with a percentage of NAs greater than this threshold are removed. Default is 0.3.
 #' @param MissingValueThresholdSample threshold for missing values per sample. Samples with a percentage of NAs greater than this threshold are removed. Default is 0.1.
 #' @param doBatchCorrection logical indicating whether to perform batch correction. If TRUE, the batch data need to be provided.
 #' @param BatchData dataframe with batch information. Should contain two columns: the first column indicating the actual sample names, the second column indicating the batch. Users are expected to retrieve the batch information from GEO on their own, but this can also be done using the GEO_getSampleInfo function with the "group.column" as the column indicating the batch for each sample. Defualt": NULL.
 #' @param batch.correction.method character string indicating the method that be used for batch correction. Should be either "Seurat" or "Combat". Default: "Seurat".
+#' @param cores number of CPU cores to be used for batch effect correction. Default: 1
 #' @return gene expression data matrix with genes in rows and samples in columns.
-#' @import doSNOW
-#' @import doParallel
 #' @export
 #' @keywords preprocess
-#' @examples
-#' \dontrun{
-  # source("R/util.R")
-  # targetDirectory <- paste0(getwd(), "/", "Data/GEO_Allergy")
-  # downloadData <- FALSE
-  # AccessionID <- "GSE114134"
-  # METdirectories <- GEO_Download_DNAMethylation(AccessionID, targetDirectory,DownloadData = downloadData)
-  # AccessionID <- "GSE114065"
-  # GEdirectories <-  GEO_Download_GeneExpression(AccessionID, targetDirectory,DownloadData = downloadData)
-  # gene.expression.data = readRDS(GEdirectories[[1]])
-  # sample.map = GEO_getSampleMap(METdirectories, GEdirectories, targetDirectory)
-  # #-----special case, only for the allergy dataset where the actual sample names in the methylation data and gene expression data are mismatched---------------
-  # sample.map$primary[which(sample.map$assay == "DNA methylation")] = gsub("\\.", "-",sample.map$primary[which(sample.map$assay == "DNA methylation")])
-  # if(targetDirectory!='' | !is.null(targetDirectory)) {
-  #   cat("Saving the sample map to files...\n")
-  #   write.csv(sample.map, paste0(targetDirectory,"/", "sample.map.csv"), row.names = FALSE)
-  #   cat("Sample map has been saved to:", paste0(targetDirectory,"/", "sample.map.csv\n"))
-  # }
-  # #------------------------------------------------------------------------------------------------------------------------------------------------------------
-  # GEProcessedData <- GEO_Preprocess_GeneExpression(gene.expression.data, sample.map = sample.map)
-#'}
 
 GEO_Preprocess_GeneExpression <- function(gene.expression.data,
                                           sample.info = NULL,
@@ -413,9 +330,9 @@ GEO_Preprocess_GeneExpression <- function(gene.expression.data,
                                           cores = 1){
   # set up some parameters
   if(cores > 1 & batch.correction.method == "Combat"){
-    unregister()
+    #unregister()
     cat("Registering sockets on multiple CPU cores...\n")
-    cl <- makeCluster(cores)
+    cl <- parallel :: makeCluster(cores)
   }
 
    ### Step 1: check data
@@ -504,7 +421,7 @@ GEO_Preprocess_GeneExpression <- function(gene.expression.data,
     }
   }
 
-  if(cores > 1) stopCluster(cl)
+  if(cores > 1) parallel :: stopCluster(cl)
 
   ### Step 6: combine MET_Experiment and MET_Control into one matrix
   if(!is.null(MET_Control)){
@@ -523,15 +440,6 @@ GEO_Preprocess_GeneExpression <- function(gene.expression.data,
 #' @param gene.expression.data gene expression data matrix with the rownames to be the ensembl_gene_ids or ensembl_transcript_ids
 #' @return gene expression matrix with rownames translated to human gene symbols (HGNC)
 #' @keywords internal
-#' @import biomaRt
-#' @examples
-#' \dontrun{
-    # AccessionID <- "GSE114065"
-    # DataDirectory <- paste0(getwd(), "/", "Data/GEO_Allergy")
-    # RNA_seq_file <- paste0(AccessionID, "_processed_RNAseq.txt")
-    # gene.expression.data <-  read.table(file=paste0(DataDirectory,"/",RNA_seq_file), sep="\t", quote="", comment.char="",header=TRUE, row.names=1, check.names = FALSE)
-    # gene.expression.data <- Convert_GenData(gene.expression.data)
-#' }
 
 convertGeneNames <- function(gene.expression.data){
     filter = NULL
@@ -551,11 +459,11 @@ convertGeneNames <- function(gene.expression.data){
       }
     }
     cat("Retrieving the transcript annotation from the Ensembl server ...\n")
-    mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+    mart <- biomaRt :: useDataset("hsapiens_gene_ensembl", biomaRt ::  useMart("ensembl"))
     ensemblID <-  rownames(gene.expression.data)
-    ensembl_gene_map <- getBM(filters= filter,
-                              attributes= c(filter,"hgnc_symbol", "chromosome_name"),
-                              values = ensemblID, mart= mart)
+    ensembl_gene_map <- biomaRt :: getBM(filters= filter,
+                                         attributes= c(filter,"hgnc_symbol", "chromosome_name"),
+                                         values = ensemblID, mart= mart)
     cat("Removing", sum(ensembl_gene_map$hgnc_symbol==""), "transcripts that can not be mapped to human gene symbols.\n")
     ensembl_gene_map <- ensembl_gene_map[ensembl_gene_map$hgnc_symbol!="",]
 
@@ -576,9 +484,9 @@ convertGeneNames <- function(gene.expression.data){
 
 
 #' The removeDuplicatedGenes function
-#' @description  sum up the transcript expression values if a gene has multiple transcripts
+#' @description sum up the transcript expression values if a gene has multiple transcripts
 #' @param GEN_data gene expression data matrix
-#' @return
+#' @return gene expression data matrix with duplicated genes removed
 #'
 removeDuplicatedGenes <- function(GEN_data){
   cat("Removing duplicated transcripts...\n")

@@ -1,0 +1,59 @@
+Package: EpiMix
+Title: EpiMix: an integrative tool for the population-level analysis of DNA methylation 
+Version: 0.99.0
+Description: EpiMix is a comprehensive tool for the integrative analysis of high-throughput DNA methylation data and gene expression data. EpiMix enables automated data downloading (from TCGA or GEO), preprocessing, methylation modeling, interactive visualization and functional annotation.To identify hypo- or hypermethylated CpG sites across physiological or pathological conditions, EpiMix uses a beta mixture modeling to identify the methylation states of each CpG probe and compares the methylation of the experimental group to the control group.The output from EpiMix is the functional DNA methylation that is predictive of gene expression. EpiMix incorporates specialized algorithms to identify functional DNA methylation at various genetic elements, including proximal cis-regulatory elements of protein-coding genes, distal enhancers, and genes encoding microRNAs and lncRNAs.
+Authors@R: c(
+             person("Yuanning", "Zheng", email = c("yuanning.zheng@gmail.com"), role = c("aut", "cre")),
+             person("Olivier", "Gevaert", email = c("ogevaert@stanford.edu"), role = c("aut"))
+             )
+Maintainer: Yuanning Zheng <yuanning.zheng@gmail.com>
+Depends: R (>= 4.1.0), EpiMix.data (>= 0.99.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+  biomaRt,
+  GenomicRanges,
+  IRanges, 
+  Biobase, 
+  tidyr,
+  dplyr,
+  SummarizedExperiment,
+  sesameData,
+  GEOquery,
+  limma,
+  RCurl,
+  impute, 
+  RColorBrewer,
+  ggplot2,
+  data.table,
+  doSNOW,
+  parallel,
+  doParallel,
+  foreach,
+  R.matlab,
+  GenomeInfoDb,
+  GenomicFeatures,
+  S4Vectors,
+  plyr,
+  progress,
+  tibble,
+  AnnotationDbi,
+  methods,
+  rlang,
+  RPMM,
+  downloader
+Suggests:
+  BiocStyle,
+  knitr,
+  Seurat,
+  karyoploteR,
+  regioneR,
+  TxDb.Hsapiens.UCSC.hg19.knownGene,
+  survival,
+  survminer,
+  org.Hs.eg.db,
+  clusterProfiler
+biocViews: DNAMethylation, DifferentialMethylation, MethylationArray,  GeneExpression, Transcription, FunctionalAnnotation, Pathways, Survival, Preprocessing, Visualization
+RoxygenNote: 7.1.2
+VignetteBuilder: knitr

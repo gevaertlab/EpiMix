@@ -1,0 +1,6 @@
+"Gene","Probe","State","Proportion of hypo (%)","Proportion of hyper (%)","Fold change of gene expression","Comparators","Raw.p","Adjusted.p"
+"CCND3","cg14029001","Hyper",0,61.369,0.957,"hyper vs normal",6.84489229767403e-12,1.36897845953481e-11
+"CCND3","cg00374492","Hyper",0,13.024,0.94,"hyper vs normal",1.46069645554223e-08,1.46069645554223e-08
+"HOXA9","cg21172377","Hyper",0,78.808,0.654,"hyper vs normal",6.71559230698994e-08,6.71559230698994e-08
+"CCND2","cg21462428","Hyper",0,42.826,0.929,"hyper vs normal",1.49604937982166e-09,1.49604937982166e-09
+"CNGB1","cg00973322","Hypo",37.748,0,1.621,"hypo vs normal",1.2661256247504e-21,1.2661256247504e-21

@@ -1,3 +1,6 @@
+#' @importFrom RPMM betaObjf
+NULL
+
 #' The MethylMix_MixtureModel function
 #'
 #' Internal. Prepares all the structures to store the results and calls in a foreach loop a function that fits the mixture model in each gene.
@@ -11,7 +14,6 @@
 #' @return MethylationDrivers character vector with the genes found by MethylMix as differentially methylated and transcriptionally predictive (driver genes).
 #' @return MixtureStates a list with a matrix for each driver gene containing the DM values.
 #' @return Classifications a vector indicating to which component each sample was assigned.
-#' @importFrom foreach %dopar%
 #' @import doSNOW
 #' @keywords internal
 #'
@@ -38,8 +40,8 @@ MethylMix_MixtureModel <- function(METcancer, METnormal = NULL, FunctionalGenes,
   # set a progress bar
   pb = NULL
   iterations = length(rownames(METcancer))
-  pb <- txtProgressBar(max = iterations, style = 3)
-  progress <- function(n) setTxtProgressBar(pb, n)
+  pb <- utils :: txtProgressBar(max = iterations, style = 3)
+  progress <- function(n) utils :: setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
 
   i <- NULL # to avoid "no visible binding for global variable" in R CMD check
@@ -180,7 +182,7 @@ MethylMix_ModelSingleGene <-function(GeneName, METdataVector, METdataNormalVecto
       MethylationState[1, ] = Difference
       MixtureStates[1, 1] = Difference
     }
-    cat(c(GeneName,": 1 component is best.\n"))
+    #cat(c(GeneName,": 1 component is best.\n"))
   } else {
     for (comp in 1:NrComponents) {
       METdataVector_comp = METdataVector[classification == comp]
@@ -204,7 +206,7 @@ MethylMix_ModelSingleGene <-function(GeneName, METdataVector, METdataNormalVecto
       classification = FlipOverResults$classification
       FlipOverState = FlipOverResults$LearnedState
     }
-    cat(c(GeneName,": ", NrComponents, " components are best.\n"))
+    #cat(c(GeneName,": ", NrComponents, " components are best.\n"))
   }
   return(list(MethylationStates = MethylationState,
               NrComponents = NrComponents,
@@ -451,29 +453,55 @@ betaEst_2 <-function (Y, w, weights) {
 
 #' The EpiMix_PlotModel function.
 #'
-#' Produce plots to represent EpiMix's output.
-#' @param EpiMixResults List returned by the EpiMix function.
-#' @param Probe character string indicating the name of the CpG probe for which to create a EpiMix plot.
-#' @param GeneName character string indicating the name of the gene whose expression will be ploted with the EpiMix plot (optional).
+#' Produce the mixture model and the gene expression plots representing the EpiMix results.
+#' @param EpiMixResults resulting list object from the EpiMix function.
+#' @param Probe character string indicating the name of the CpG probe for which to create a mixture model plot.
 #' @param methylation.data Matrix with the methylation data with genes in rows and samples in columns.
-#' @param gene.expression.data Gene expression data with genes in rows and samples in columns (optional).
-#' @return a list of EpiMix plots:
-#' (1) a histogram of the methylation data ($MixtureModelPlot).
-#' (2) a violin plot of gene expression (specified by the GeneName) in each mixture component ($ViolinPlot).
-#' (3) a scatter plot between DNA methylation and gene expression ($CorrelationPlot).
+#' @param gene.expression.data Gene expression data with genes in rows and samples in columns (optional). Default: NULL.
+#' @param GeneName character string indicating the name of the gene whose expression will be ploted with the EpiMix plot (optional). Default: NULL.
+#' @param axis.title.font font size for the axis legend.
+#' @param axis.text.font font size for the axis label.
+#' @param legend.title.font font size for the legend title.
+#' @param legend.text.font font size for the legend label.
+#' @param plot.title.font font size for the plot title.
+#' @return A list of EpiMix plots:
+#' \item{MixtureModelPlot}{a histogram of the distribution of DNA methylation data}
+#' \item{ViolinPlot}{a violin plot of gene expression levels in different mixutures in the MixtureModelPlot}
+#' \item{CorrelationPlot}{a scatter plot between DNA methylation and gene expression}
+#' @details
 #' The violin plot and the scatter plot will be NULL if the gene expression data or the GeneName is not provided
 #' @import ggplot2
 #' @export
 #' @examples
 #' \dontrun{
+#' data(MET.data)
+#' data(mRNA.data)
+#' data(Sample_EpiMixResults_Regular)
 #'
-#'
+#' probe = "cg14029001"
+#' gene.name = "CCND3"
+#' plots <- EpiMix_PlotModel(
+#'                           EpiMixResults = Sample_EpiMixResults_Regular,
+#'                           Probe = probe,
+#'                           methylation.data = MET.data,
+#'                           gene.expression.data = mRNA.data,
+#'                           GeneName = gene.name
+#'                            )
+#' plots$MixtureModelPlot
+#' plots$ViolinPlot
+#' plots$CorreilationPlot
 #' }
 #'
-
-
-EpiMix_PlotModel <- function(EpiMixResults, Probe, GeneName = NULL, methylation.data, gene.expression.data = NULL,
-                            axis.title.font = 20, axis.text.font = 16, legend.title.font = 18, legend.text.font = 18, plot.title.font = 20) {
+EpiMix_PlotModel <- function(EpiMixResults,
+                             Probe,
+                             methylation.data,
+                             gene.expression.data = NULL,
+                             GeneName = NULL,
+                             axis.title.font = 20,
+                             axis.text.font = 16,
+                             legend.title.font = 18,
+                             legend.text.font = 18,
+                             plot.title.font = 20) {
 
   # start to drawing graphs
   met <- x <- dens <- comp <- ge <- group <- ..density.. <-  plot_title <- NULL # to avoid "no visible binding for global variable" in R CMD check

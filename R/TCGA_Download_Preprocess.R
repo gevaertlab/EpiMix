@@ -9,33 +9,9 @@
 #' @keywords download
 #' @examples
 #' \dontrun{
-#'
-#' # Optional register cluster to run in parallel
-#' library(doParallel)
-#' cl <- makeCluster(5)
-#' registerDoParallel(cl)
-#'
-#' # Methylation data for ovarian cancer
-#' cancerSite <- "OV"
-#' targetDirectory <- paste0(getwd(), "/")
-#'
-#' # Downloading methylation data
-#' METdirectories <- Download_DNAmethylation(cancerSite, targetDirectory, TRUE)
-#'
-#' # Processing methylation data
-#' METProcessedData <- Preprocess_DNAmethylation(cancerSite, METdirectories)
-#'
-#' # Saving methylation processed data
-#' saveRDS(METProcessedData, file = paste0(targetDirectory, "MET_", cancerSite, "_Processed.rds"))
-#'
-#' # Clustering methylation data
-#' res <- ClusterProbes(METProcessedData[[1]], METProcessedData[[2]])
-#'
-#' # Saving methylation clustered data
-#' toSave <- list(METcancer = res[[1]], METnormal = res[[2]], ProbeMapping = res$ProbeMapping)
-#' saveRDS(toSave, file = paste0(targetDirectory, "MET_", cancerSite, "_Clustered.rds"))
-#'
-#' stopCluster(cl)
+#' CancerSite <- "OV"
+#' targetDirctory <- paste0(getwd(), "/Data")
+#' METdirectories <- TCGA_Download_DNAmethylation(CancerSite, targetDirectory)
 #' }
 #'
 TCGA_Download_DNAmethylation <- function(CancerSite,
@@ -249,50 +225,27 @@ get_firehoseData <- function(downloadData=TRUE,
 #' @keywords preprocess
 #' @examples
 #' \dontrun{
-#'
-#' # Optional register cluster to run in parallel
-#' library(doParallel)
-#' cl <- makeCluster(5)
-#' registerDoParallel(cl)
-#'
-#' # Methylation data for ovarian cancer
-#' cancerSite <- "OV"
-#' targetDirectory <- paste0(getwd(), "/")
-#'
-#' # Downloading methylation data
-#' METdirectories <- Download_DNAmethylation(cancerSite, targetDirectory, TRUE)
-#'
-#' # Processing methylation data
-#' METProcessedData <- Preprocess_DNAmethylation(cancerSite, METdirectories)
-#'
-#' # Saving methylation processed data
-#' saveRDS(METProcessedData, file = paste0(targetDirectory, "MET_", cancerSite, "_Processed.rds"))
-#'
-#' # Clustering methylation data
-#' res <- ClusterProbes(METProcessedData[[1]], METProcessedData[[2]])
-#'
-#' # Saving methylation clustered data
-#' toSave <- list(METcancer = res[[1]], METnormal = res[[2]], ProbeMapping = res$ProbeMapping)
-#' saveRDS(toSave, file = paste0(targetDirectory, "MET_", cancerSite, "_Clustered.rds"))
-#'
-#' stopCluster(cl)
+#' CancerSite <- "OV"
+#' targetDirctory <- paste0(getwd(), "/Data")
+#' METdirectories <- TCGA_Download_DNAmethylation(CancerSite, targetDirectory)
+#' METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite, METdirectories)
 #' }
-#'
+
 TCGA_Preprocess_DNAmethylation <- function(CancerSite,
                                            METdirectories,
                                            doBatchCorrection = FALSE,
                                            batch.correction.method = "Seurat",
                                            MissingValueThreshold = 0.2,
-                                           cores = 1,
-                                           AnnotationRoot = "Annotation"){
+                                           cores = 1
+                                           ){
 
     cat("\tProcessing data for",CancerSite,"\n")
 
     # set up some paramerters
     if(cores > 1 & batch.correction.method == "Combat"){
-      unregister()
+      #unregister()
       cat("Registering sockets on multiple CPU cores...\n")
-      cl <- makeCluster(cores)
+      cl <- parallel :: makeCluster(cores)
     }
 
     # ---------------------------------------------------------------------------------------------
@@ -372,9 +325,8 @@ TCGA_Preprocess_DNAmethylation <- function(CancerSite,
     # Step 4: Perform batch correction
     # ---------------------------------------------------------------------------------------------
     if(doBatchCorrection){
-      #get("BatchData")
-      BatchData = readRDS(paste0(AnnotationRoot, "/TCGA_BatchData.rds"))
-      MinPerBatch=5
+      BatchData = EpiMix_GetData("TCGA_BatchData")
+      MinPerBatch = 5
       cat("\tBatch correction for the cancer samples.\n")
 
       #p_init = TCGA_GENERIC_CheckBatchEffect(MET_Data_Cancer, BatchData) # p = 0.054
@@ -412,7 +364,7 @@ TCGA_Preprocess_DNAmethylation <- function(CancerSite,
     }
 
     if(cores > 1 & batch.correction.method == "Combat"){
-      stopCluster(cl)
+      parallel :: stopCluster(cl)
     }
 
     # ---------------------------------------------------------------------------------------------
@@ -801,7 +753,7 @@ CorrectBatchEffect <- function(GEN_Data, BatchData, batch.correction.method, Min
 BatchCorrection_Seurat <- function(GEN_Data, BatchDataSelected){
 
   if(!requireNamespace("Seurat")){
-    message("To do batch correction with Seurar, you need to install the 'Seurat' R package")
+    message("To do batch correction with Seurat, you need to install the 'Seurat' R package")
     return(invisible())
   }
 
@@ -887,7 +839,7 @@ BatchCorrection_Seurat <- function(GEN_Data, BatchDataSelected){
     batch_samples = BatchDataSelected[BatchDataSelected$MergedBatch == batch, 1]
     data = GEN_Data[, as.character(batch_samples), drop = F]
     suppressWarnings(
-      seurat_objects[[batch_counter]] <- CreateSeuratObject(counts = data, project = paste0("MergedBatch_", batch))
+      seurat_objects[[batch_counter]] <- Seurat :: CreateSeuratObject(counts = data, project = paste0("MergedBatch_", batch))
     )
     batch_counter = batch_counter + 1
   }
@@ -900,7 +852,7 @@ BatchCorrection_Seurat <- function(GEN_Data, BatchDataSelected){
   cat("Finding variable features on Seurat Objects...\n")
   start <- Sys.time()
   for (i in 1:length(seurat_objects)){
-    seurat_objects[[i]] <- FindVariableFeatures(seurat_objects[[i]], selection.method = "vst", nfeatures =  feature_number * feature_percentage, verbose = FALSE)
+    seurat_objects[[i]] <- Seurat :: FindVariableFeatures(seurat_objects[[i]], selection.method = "vst", nfeatures =  feature_number * feature_percentage, verbose = FALSE)
   }
   end <- Sys.time()
   find.variable.time = as.numeric(end - start, units = "mins")
@@ -909,18 +861,18 @@ BatchCorrection_Seurat <- function(GEN_Data, BatchDataSelected){
   cat("==========================================================\n")
   cat("Finding Integration Anchors and Integrating Data on Seurat Objects.\n")
   start <- Sys.time()
-  data_anchors <- FindIntegrationAnchors(object.list = seurat_objects, dims = 1:dims)
+  data_anchors <- Seurat :: FindIntegrationAnchors(object.list = seurat_objects, dims = 1:dims)
   end <- Sys.time()
   find.anchor.time = as.numeric(end - start, units = "mins")
   cat("Find anchor time in minutes: ", find.anchor.time, "\n")
 
   # The k.weight parameter needs to be less than the number of samples.
   start <- Sys.time()
-  data_integrated <- IntegrateData(anchorset = data_anchors, dims=1:dims, k.weight = k.weight, features.to.integrate = features)
+  data_integrated <- Seurat :: IntegrateData(anchorset = data_anchors, dims=1:dims, k.weight = k.weight, features.to.integrate = features)
   end <- Sys.time()
   integrate.data.time = as.numeric(end - start, units = "mins")
   cat("Intergrate data time in minutes: ", integrate.data.time, "\n")
-  data_integrated <- GetAssayData(object = data_integrated, slot = "data")
+  data_integrated <- Seurat :: GetAssayData(object = data_integrated, slot = "data")
 
   data_integrated <- as.matrix(data_integrated)
 
@@ -962,25 +914,50 @@ BatchCorrection_Combat <- function(GEN_Data, BatchDataSelected){
 #' @description Download gene expression data from TCGA.
 #' @param CancerSite character string indicating the TCGA cancer code.
 #' @param TargetDirectory character with directory where a folder for downloaded files will be created.
-#' @param mode character string indicating whether we should download the gene expression data for  miRNA or lncRNA genes, instead of protein-coding genes.  If mode is set to "miRNA", microRNA expression data will be downloaded. If mode is set to "lncRNA", lncRNA expression data will be downloaded. Default:"Regular". See details.
+#' @param mode character string indicating whether we should download the gene expression data for miRNAs or lncRNAs, instead of for protein-coding genes. See details for more information.
 #' @param downloadData logical indicating if the data should be downloaded (default: TRUE). If False, the url of the desired data is returned.
 #' @return list with paths to downloaded files for gene expression.
-#' @details When mode is set to "Regular", this function downloads level 3 RNAseq data (file tag "mRNAseq_Preprocess.Level_3") using the Broad Institute Firehose tool. Since there is not enough RNAseq data for OV and GBM, the micro array data is
-#' downloaded. If you plan to run EpiMix on miRNA- or lncRNA-coding genes, please specify the "mode" parameter to "miRNA" or "lncRNA".
+#' @details
+#' mode: when mode is set to "Regular", this function downloads the level 3 RNAseq data (file tag "mRNAseq_Preprocess.Level_3"). Since there is not enough RNAseq data for OV and GBM, the micro array data is
+#' downloaded. If you plan to run the EpiMix on miRNA- or lncRNA-coding genes, please specify the "mode" parameter to "miRNA" or "lncRNA".
 #' @export
 #' @keywords download
 #' @examples
 #' \dontrun{
-#' # Gene expression data for ovarian cancer
-#' cancerSite <- "OV"
-#' targetDirectory <- paste0(getwd(), "/")
-#'
-#' # Downloading gene expression data
-#' GEdirectories <- Download_GeneExpression(cancerSite,
+#' # Example #1 : download regular gene expression data for ovarian cancer
+#' CancerSite <- "OV"
+#' mode <- "Regular"
+#' targetDirectory <- paste0(getwd(), "/Data")
+#' GEdirectories <- Download_GeneExpression(CancerSite,
 #'                                          targetDirectory,
-#'                                          mode = "Regular",
-#'                                          downloadData=TRUE)
+#'                                          mode = mode
+#'                                          )
 #' }
+#' \dontrun{
+#' # Example #2 : download miRNA gene expression data for ovarian cancer
+#' CancerSite <- "OV"
+#' mode <- "miRNA"
+#' targetDirectory <- paste0(getwd(), "/Data")
+#'
+#' # Download gene expression data
+#' GEdirectories <- Download_GeneExpression(CancerSite,
+#'                                          targetDirectory,
+#'                                          mode = mode
+#'                                          )
+#' }
+#' \dontrun{
+#' # Example #3 : download lncRNA gene expression data for ovarian cancer
+#' CancerSite <- "OV"
+#' mode <- "lncRNA"
+#' targetDirectory <- paste0(getwd(), "/Data")
+#'
+#' # Download gene expression data
+#' GEdirectories <- Download_GeneExpression(CancerSite,
+#'                                          targetDirectory,
+#'                                          mode = mode
+#'                                          )
+#' }
+#'
 #'
 TCGA_Download_GeneExpression <- function(CancerSite,TargetDirectory, mode = "Regular", downloadData=TRUE) {
 
@@ -1009,7 +986,7 @@ TCGA_Download_GeneExpression <- function(CancerSite,TargetDirectory, mode = "Reg
         #special case for GBM and OV, not enough RNAseq data, so using the microarray data instead
         if (CancerSite=="GBM") {
           dataFileTag=c('Merge_transcriptome__agilentg4502a_07_1__unc_edu__Level_3__unc_lowess_normalization_gene_level__data','Merge_transcriptome__agilentg4502a_07_2__unc_edu__Level_3__unc_lowess_normalization_gene_level__data')
-        } else if(CancerSite=="AVA") {
+        } else if(CancerSite=="OV") {
           dataFileTag='Merge_transcriptome__agilentg4502a_07_3__unc_edu__Level_3__unc_lowess_normalization_gene_level__data'
         }
       }
@@ -1036,8 +1013,8 @@ TCGA_Download_GeneExpression <- function(CancerSite,TargetDirectory, mode = "Reg
 #' @description Pre-processes gene expression data from TCGA.
 #' @param CancerSite character string indicating the TCGA cancer code.
 #' @param MAdirectories character vector with directories with the downloaded data. It can be the object returned by the GEO_Download_GeneExpression function.
-#' @param mode character string indicating whether the genes in the gene expression data is miRNAs or lncRNAs. Should be either "Regular", "Enhancer", "miRNA" or "lncRNA". This value should be consistent with the same parameter in the TCGA_Download_GeneExpression function. Default: "Regular".
-#' @param doBatchCorrection logical indicating whether to perform batch correction. Default: False.
+#' @param mode character string indicating whether the genes in the gene expression data are miRNAs or lncRNAs. Should be either "Regular", "Enhancer", "miRNA" or "lncRNA". This value should be consistent with the same parameter in the TCGA_Download_GeneExpression function. Default: "Regular".
+#' @param doBatchCorrection logical indicating whether to perform batch effect correction. Default: False.
 #' @param batch.correction.method character string indicating the method to perform batch correction. The value should be either "Seurat" or "Combat". Default: "Seurat". Seurat is much fatster than the Combat.
 #' @param MissingValueThresholdGene threshold for missing values per gene. Genes with a percentage of NAs greater than this threshold are removed. Default is 0.3.
 #' @param MissingValueThresholdSample threshold for missing values per sample. Samples with a percentage of NAs greater than this threshold are removed. Default is 0.1.
@@ -1049,32 +1026,32 @@ TCGA_Download_GeneExpression <- function(CancerSite,TargetDirectory, mode = "Reg
 #' @keywords preprocess
 #' @examples
 #' \dontrun{
-#'
-#' # Optional register cluster to run in parallel
-#' library(doParallel)
-#' cl <- makeCluster(5)
-#' registerDoParallel(cl)
-#'
-#' # Gene expression data for ovarian cancer
-#' cancerSite <- "OV"
-#' targetDirectory <- paste0(getwd(), "/")
-#'
-#' # Downloading gene expression data
-#' GEdirectories <- Download_GeneExpression(cancerSite, targetDirectory, TRUE)
-#'
-#' # Processing gene expression data
-#' GEProcessedData <- Preprocess_GeneExpression(cancerSite, GEdirectories)
-#'
-#' # Saving gene expression processed data
-#' saveRDS(GEProcessedData, file = paste0(targetDirectory, "GE_", cancerSite, "_Processed.rds"))
-#'
-#' stopCluster(cl)
+#' # Preprocess the gene expression data of ovarian cancer for the use of Regular mode
+#' mode <- "Regular"
+#' targetDirectory <- paste0(getwd(), "/Data")
+#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
+#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
 #' }
+#' \dontrun{
+#' # Preprocess the gene expression data of ovarian cancer for the use of miRNA mode
+#' mode <- "miRNA"
+#' targetDirectory <- paste0(getwd(), "/Data")
+#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
+#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
+#' }
+#' \dontrun{
+#' # Preprocess the gene expression data of ovarian cancer for the use of lncRNA mode
+#' mode <- "lncRNA"
+#' targetDirectory <- paste0(getwd(), "/Data")
+#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
+#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
+#' }
+#'
 #'
 TCGA_Preprocess_GeneExpression <- function(CancerSite,
                                            MAdirectories,
                                            mode = "Regular",
-                                           doBatchCorrection = TRUE,
+                                           doBatchCorrection = FALSE,
                                            batch.correction.method = "Seurat" ,
                                            MissingValueThresholdGene=0.3,
                                            MissingValueThresholdSample=0.1,
@@ -1083,16 +1060,16 @@ TCGA_Preprocess_GeneExpression <- function(CancerSite,
 
   # set up some paramerters
   if(cores > 1 & batch.correction.method == "Combat"){
-    unregister()
+    #unregister()
     cat("Registering sockets on multiple CPU cores...\n")
-    cl <- makeCluster(cores)
+    cl <- parallel :: makeCluster(cores)
   }
 
   # ---------------------------------------------------------------------------------------------
   # Step 1: Load gene expression data
   # ---------------------------------------------------------------------------------------------
 
-    BatchData = EpiMix_GetData(TCGA_BatchData)
+    BatchData = EpiMix_GetData("TCGA_BatchData")
     MinPerBatchCancer=5
     MinPerBatchNormal=2
 
@@ -1106,7 +1083,7 @@ TCGA_Preprocess_GeneExpression <- function(CancerSite,
        MAstring='miRseq_RPKM_log2.txt'
       }else{
       # Processing MA data, special case for OV and GBM where no RNA seq data is available
-      if (CancerSite=="AVA" || CancerSite=="GBM") {
+      if (CancerSite=="OV" || CancerSite=="GBM") {
           MAstring='transcriptome__agilent'
       } else if (CancerSite=="STAD" || CancerSite=="ESCA") { # for these cancers RSEM data does not exist.
           MAstring='mRNAseq_RPKM_log2.txt'
@@ -1490,142 +1467,6 @@ TCGA_GENERIC_MergeData <-function(NewIDListUnique, DataMatrix) {
     return(MergedData)
 }
 
-# #' The TCGA_GENERIC_ReadDataMatrixMatFile function
-# #'
-# #' Internal. Reads a MAT file structure from a connection or a file.
-# #' @param Filename name of the file with the data.
-# #' @return matrix with the data.
-# #' @keywords internal
-# #'
-# TCGA_GENERIC_ReadDataMatrixMatFile <- function(Filename) {
-#
-#     DataList=R.matlab::readMat(Filename)
-#
-#     MATdata=as.matrix(DataList$RawData)
-#     rownames(MATdata)=DataList[[2]]
-#     colnames(MATdata)=DataList[[3]]
-#
-#     return(MATdata)
-# }
-
-#' The ClusterProbes function
-#'
-#' This function uses the annotation for Illumina methylation arrays to map each probe to a gene. Then, for each gene,
-#' it clusters all its CpG sites using hierchical clustering and Pearson correlation as distance and complete linkage.
-#' If data for normal samples is provided, only overlapping probes between cancer and normal samples are used.
-#' Probes with SNPs are removed.
-#' This function is prepared to run in parallel if the user registers a parallel structure, otherwise it runs sequentially.
-#' This function also cleans up the sample names, converting them to the 12 digit format.
-#' @param MET_Cancer data matrix for cancer samples.
-#' @param MET_Normal data matrix for normal samples.
-#' @param CorThreshold correlation threshold for cutting the clusters.
-#' @return List with the clustered data sets and the mapping between probes and genes.
-#' @keywords cluter_probes
-#' @importFrom foreach %dopar%
-#' @examples
-#' \dontrun{
-#'
-#' # Optional register cluster to run in parallel
-#' library(doParallel)
-#' cl <- makeCluster(5)
-#' registerDoParallel(cl)
-#'
-#' # Methylation data for ovarian cancer
-#' cancerSite <- "OV"
-#' targetDirectory <- paste0(getwd(), "/")
-#'
-#' # Downloading methylation data
-#' METdirectories <- Download_DNAmethylation(cancerSite, targetDirectory, TRUE)
-#'
-#' # Processing methylation data
-#' METProcessedData <- Preprocess_DNAmethylation(cancerSite, METdirectories)
-#'
-#' # Saving methylation processed data
-#' saveRDS(METProcessedData, file = paste0(targetDirectory, "MET_", cancerSite, "_Processed.rds"))
-#'
-#' # Clustering methylation data
-#' res <- ClusterProbes(METProcessedData[[1]], METProcessedData[[2]])
-#'
-#' # Saving methylation clustered data
-#' toSave <- list(METcancer = res[[1]], METnormal = res[[2]], ProbeMapping = res$ProbeMapping)
-#' saveRDS(toSave, file = paste0(targetDirectory, "MET_", cancerSite, "_Clustered.rds"))
-#'
-#' stopCluster(cl)
-#' }
-#'
-ClusterProbes <- function(MET_Cancer, MET_Normal, CorThreshold = 0.4) {
-
-    # Top level function that implements an equivalent cluster algorithm but using hierarchical clustering with complete linkage.
-
-    # overlapping cancer & normal probes
-    if (!is.null(MET_Normal)) {
-        OverlapProbes=intersect(rownames(MET_Cancer),rownames(MET_Normal))
-        MET_Cancer=MET_Cancer[OverlapProbes,]
-        MET_Normal=MET_Normal[OverlapProbes,]
-    }
-
-    #Get probe information
-    get("ProbeAnnotation")
-
-    # remove probes with SNPs
-    get("SNPprobes")
-
-    GoodProbes=setdiff(rownames(MET_Cancer),SNPprobes)
-    NrProbesToRemove=length(rownames(MET_Cancer))-length(GoodProbes)
-    cat("Removing",NrProbesToRemove,"probes with SNPs.\n")
-    MET_Cancer=MET_Cancer[GoodProbes,]
-    if (!is.null(MET_Normal)) MET_Normal=MET_Normal[GoodProbes,]
-
-    ###### only iterating over genes that have probes present
-    # Getting the positions relative to probe annotation of the probes present in this data set.
-    PresentProbes=match(ProbeAnnotation[,1],rownames(MET_Cancer))
-    UniqueGenes=sort(unique(ProbeAnnotation[!is.na(PresentProbes),2]))
-    UniqueGenes=UniqueGenes[which(UniqueGenes != "")] # there is one empty one
-
-    # create large matrix, delete zeros in the end.
-    MET_Cancer_C=matrix(0,length(rownames(MET_Cancer)),length(colnames(MET_Cancer)))
-    colnames(MET_Cancer_C)=colnames(MET_Cancer)
-    if (!is.null(MET_Normal)) {
-        MET_Normal_C=matrix(0,length(rownames(MET_Cancer)),length(colnames(MET_Normal)))
-        colnames(MET_Normal_C)=colnames(MET_Normal)
-    }
-    ProbeMapping=matrix(0,length(rownames(MET_Cancer)),2)
-    ProbeCounter=1
-    METmatrixCounter=1
-    ClusteredRownames=c()
-
-    # alternative to do it in parallel
-    cat("Clustering",length(rownames(MET_Cancer)),"probes in CpG site clusters.\n")
-    # cluster needs to know the function because it is defined only here, so it does not know other functions.
-    tmpClusterResults = foreach::foreach(i=1:length(UniqueGenes), .export='TCGA_GENERIC_MET_ClusterProbes_Helper_ClusterGenes_with_hclust') %dopar% {
-        TCGA_GENERIC_MET_ClusterProbes_Helper_ClusterGenes_with_hclust(UniqueGenes[i],ProbeAnnotation,MET_Cancer,MET_Normal,CorThreshold)
-    }
-
-    for ( i in 1:length(UniqueGenes) ) {
-        MET_Cancer_C[METmatrixCounter:(METmatrixCounter-1+nrow(tmpClusterResults[[i]][[1]])),]=tmpClusterResults[[i]][[1]]
-        if (!is.null(MET_Normal)) MET_Normal_C[METmatrixCounter:(METmatrixCounter-1+nrow(tmpClusterResults[[i]][[2]])),]=tmpClusterResults[[i]][[2]]
-        METmatrixCounter=METmatrixCounter+nrow(tmpClusterResults[[i]][[1]])
-        ClusteredRownames=c(ClusteredRownames,rownames(tmpClusterResults[[i]][[1]]))
-        ProbeMapping[ProbeCounter:(ProbeCounter-1+nrow(tmpClusterResults[[i]][[3]])),]=tmpClusterResults[[i]][[3]]
-        ProbeCounter=ProbeCounter+nrow(tmpClusterResults[[i]][[3]])
-    }
-    # remove excessively large matrix
-    MET_Cancer_C=MET_Cancer_C[1:length(ClusteredRownames),]
-    rownames(MET_Cancer_C)=ClusteredRownames
-    #MET_Cancer_C = TCGA_GENERIC_CleanUpSampleNames(MET_Cancer_C, 12)
-    MET_Cancer_C = TCGA_GENERIC_CleanUpSampleNames(MET_Cancer_C, 15)
-    if (!is.null(MET_Normal)) {
-        MET_Normal_C=MET_Normal_C[1:length(ClusteredRownames),]
-        rownames(MET_Normal_C)=ClusteredRownames
-        #MET_Normal_C = TCGA_GENERIC_CleanUpSampleNames(MET_Normal_C, 12)
-        MET_Normal_C = TCGA_GENERIC_CleanUpSampleNames(MET_Normal_C, 15)
-    } else {
-        MET_Normal_C = NULL
-    }
-
-    cat("\nFound",length(rownames(MET_Cancer_C)),"CpG site clusters.\n")
-    return(list(MET_Cancer_Clustered=MET_Cancer_C,MET_Normal_Clustered=MET_Normal_C,ProbeMapping=ProbeMapping))
-}
 
 #' The TCGA_GENERIC_MET_ClusterProbes_Helper_ClusterGenes_with_hclust function
 #'
@@ -1697,8 +1538,7 @@ TCGA_GENERIC_MET_ClusterProbes_Helper_ClusterGenes_with_hclust <- function(Gene,
 #'
 #' @return A dataframe for the sample groups. Contains two columns: the first column (named: "primary") indicating the sample names, and the second column (named: "sample.type") indicating whether each sample is a Cancer or Normal tissue.
 #' @export
-#' @examples
-#'
+
 TCGA_GetSampleInfo <- function(METProcessedData, CancerSite = "LUAD", targetDirectory = NULL){
   # Split up normal and cancer data
   Samplegroups <- cancer_samples <- normal_samples <- NULL
@@ -1717,7 +1557,7 @@ TCGA_GetSampleInfo <- function(METProcessedData, CancerSite = "LUAD", targetDire
   df.normal = data.frame(primary = normal_samples, sample.type = rep("Normal", length(normal_samples)))
   sample.info = rbind(df.cancer, df.normal)
   if(!is.null(targetDirectory)){
-    write.csv(sample.info, paste0(targetDirectory, "/", "sample.info.csv"), row.names = FALSE)
+    utils :: write.csv(sample.info, paste0(targetDirectory, "/", "sample.info.csv"), row.names = FALSE)
   }
   cat("There are",length(cancer_samples),"cancer samples and",length(normal_samples),"normal samples in",CancerSite,"\n")
   return(sample.info)
@@ -1789,9 +1629,9 @@ Preprocess_CancerSite_Methylation27k <- function(CancerSite, METdirectory, doBat
     MET_Data_Normal=TCGA_Process_EstimateMissingValues(MET_Data_Normal,MissingValueThreshold)
   }
 
-  if(dobatchCorrection){
+  if(doBatchCorrection){
     # Batch correction for cancer and normal.
-    get("BatchData")
+    BatchData = EpiMix_GetData("TCGA_BatchData")
     MinPerBatch=5
     cat("\tBatch correction for the cancer samples.\n")
     MET_Data_Cancer= CorrectBatchEffect(GEN_Data = MET_Data_Cancer,
