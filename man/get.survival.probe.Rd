@@ -39,7 +39,8 @@ data("Sample_EpiMixResults_miRNA")
 CancerSite = "LUAD"
 
 # Find survival-associated CpGs/genes
-survival.CpGs <- get.survival.probe (EpiMixResults = Sample_EpiMixResults_miRNA, TCGA_CancerSite = CancerSite)
+survival.CpGs <- get.survival.probe (EpiMixResults = Sample_EpiMixResults_miRNA,
+                                     TCGA_CancerSite = CancerSite)
 }
 
 }

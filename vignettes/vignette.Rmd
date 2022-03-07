@@ -44,7 +44,7 @@ EpiMix incorporates specialized algorithms to identify functional DNA methylatio
 * **miRNA**: miRNA-coding genes.
 * **lncRNA**: lncRNA-coding genes.
 
-![Figure 1. Overview of EpiMix's workflow. EpiMix incorporates four functional modules: downloading, preprocessing, methylation modeling and functional analysis. The methylation modeling module enables four alternative analytic modes, including "Regular", "Enhancer", "miRNA" and "lncRNA". These analytic modes target DNA methylation analysis on different genetic elements.](figures/Workflow.png)
+![**Figure 1**. Overview of EpiMix's workflow. EpiMix incorporates four functional modules: downloading, preprocessing, methylation modeling and functional analysis. The methylation modeling module enables four alternative analytic modes, including "Regular", "Enhancer", "miRNA" and "lncRNA". These analytic modes target DNA methylation analysis on different genetic elements.](figures/Workflow.png)
 
 
 <br>
@@ -73,7 +73,7 @@ EpiMix enables the generation of the results for data from the TCGA project with
 * **Regular mode**
 
 ```{r, eval = FALSE}
-# Set up the TCGA cancer site. 
+# Set up the TCGA cancer site. "OV" stands for ovarian cancer.  
 CancerSite <- "OV"     
 
 # Set up the analytic mode
@@ -93,7 +93,7 @@ EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
 * **Enhancer mode**
 
 ```{r, eval = FALSE}
-# Set up the TCGA cancer site. 
+# Set up the TCGA cancer site. "OV" stands for ovarian cancer. 
 CancerSite <- "OV"  
 
 # Set up the analytic mode
@@ -120,7 +120,7 @@ EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
 * **miRNA mode**
 
 ```{r, eval = FALSE}
-# Set up the TCGA cancer site.
+# Set up the TCGA cancer site. "OV" stands for ovarian cancer. 
 CancerSite <- "OV"
 
 # Set up the analytic mode
@@ -139,7 +139,7 @@ EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
 * **lncRNA mode**
 
 ```{r, eval = FALSE}
-# Set up the TCGA cancer site.
+# Set up the TCGA cancer site. "OV" stands for ovarian cancer. 
 CancerSite <- "OV"
 
 # Set up the analytic mode
@@ -165,7 +165,7 @@ The above one-step functions can be executed in a step-by-step manner in case us
 + Download DNA methylation data   
 
 ```{r, eval=FALSE}
-# Set up the TCGA cancer site.
+# Set up the TCGA cancer site. "OV" stands for ovarian cancer. 
 CancerSite <- "OV" 
 
 # Set the file path where the data will be saved. 
@@ -447,7 +447,7 @@ datatable(EpiMixResults_lncRNA$FunctionalPairs[1:5, ],
 
 <br>
 
-## 5. Visulization
+## 5. Visualization
 
 EpiMix enables diverse types of visualization. 
 
@@ -483,9 +483,9 @@ plots$CorreilationPlot
 ```
 <br>
 
-### 5.2 Genome-browser style visulization
+### 5.2 Genome-browser style visualization
 
-#### 5.2.1 Integrative visulization of the chromatin state, DNA methylation, and transcript structure of a specific gene
+#### 5.2.1 Integrative visualization of the chromatin state, DNA methylation, and transcript structure of a specific gene
 
 ```{r, eval=FALSE}
 library(EpiMix)
@@ -513,7 +513,7 @@ EpiMix_PlotGene(gene.name = gene.name,
           )
 ```
 
-![Integrative visulization of the chromatin state, DM values and the transcript structure of the *CCND2* gene. The differential methylation (DM) value represents the mean difference in beta values between the hypermethylated samples versus the normally methylated samples](figures/CCND2.png)
+![Integrative visualization of the chromatin state, DM values and the transcript structure of the *CCND2* gene. The differential methylation (DM) value represents the mean difference in beta values between the hypermethylated samples versus the normally methylated samples](figures/CCND2.png)
 
 <br>
 
