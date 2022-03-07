@@ -1,6 +1,5 @@
 # EpiMix
 ## A comprehensive tool for the population-level analysis of DNA methylation
-<br>
 
 ### Authors
 <hr>
