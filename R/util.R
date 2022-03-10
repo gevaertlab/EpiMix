@@ -936,7 +936,7 @@ EpiMix_PlotSurvival <- function(EpiMixResults,
   target.survival <-merge(survival.info, mixture.group)
   target.survival <- target.survival[order(target.survival$State), ]
   survival <- survminer :: ggsurvplot(
-    survminer :: surv_fit(Surv(time, status) ~ State, data = target.survival),
+    survminer :: surv_fit(survival :: Surv(time, status) ~ State, data = target.survival),
     pval = TRUE,
     legend.title = "mixture component",
     legend.labs = unique(target.survival$State),
