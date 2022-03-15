@@ -4,3 +4,5 @@ inst/doc
 .Ruserdata
 .Rbuildignore
 .DS_Store
+*.Rproj
+*.log
