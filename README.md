@@ -5,7 +5,7 @@
 <hr>
 
 Yuanning Zheng, John Jun, Kevin Brennan and Olivier Gevaert<br>
-Stanford Center for Biomedical Informatic Research (BIMR)<br>
+Stanford Center for Biomedical Informatics Research (BIMR)<br>
 Department of Medicine<br>
 1265 Welch Road<br>
 Stanford CA, 94305-5479
