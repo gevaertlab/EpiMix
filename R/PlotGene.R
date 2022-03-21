@@ -104,7 +104,9 @@ EpiMix_PlotGene <- function(gene.name,
 
   # Retrieve probe information
   cat("Retrieving probe annotation...\n")
-  ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+  suppressMessages({
+    ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+  })
   ProbeAnnotation = convertAnnotToDF(ProbeAnnotation)
   ProbeAnnotation = mapProbeGene(ProbeAnnotation)
   ProbeAnnotation = ProbeAnnotation[ProbeAnnotation$gene == gene.name, ]

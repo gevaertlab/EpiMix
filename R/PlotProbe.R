@@ -97,7 +97,9 @@ EpiMix_PlotProbe <- function(probe.name,
   # get nearby genes of the probe
   genome = "hg19"
   cat("Retrieving probe annotation...\n")
-  ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+  suppressMessages({
+    ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+  })
   ProbeAnnotation = ProbeAnnotation[probe.name, ]
 
   geneAnnot <- getTSS(genome = genome)

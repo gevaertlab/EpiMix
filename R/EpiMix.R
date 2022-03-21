@@ -175,7 +175,7 @@ EpiMix <- function(methylation.data,
   met.platform = toupper(met.platform)
   genome = tolower(genome)
   mode = tolower(mode)
-  suppressMessages(sesameData::sesameDataCache(met.platform))
+  #suppressMessages(sesameData::sesameDataCache(met.platform))
   if(OutputRoot!="") dir.create(OutputRoot,showWarnings=FALSE)
 
   ### Process 2: Set up the parallel backend
@@ -208,7 +208,10 @@ EpiMix <- function(methylation.data,
 
     ### Step 1: Map probes to genes according to probe annotation
     cat("Fetching probe annotation...\n")
-    ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+    suppressMessages({
+      ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+    })
+
     ProbeAnnotation = convertAnnotToDF(ProbeAnnotation)
 
     cat("Mapping probes to genes...\n")
@@ -400,7 +403,9 @@ EpiMix <- function(methylation.data,
 
     ### Step 1: Map probes to genes according to probe annotation
     cat("Fetching probe annotation...\n")
-    ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+    suppressMessages({
+      ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+    })
     ProbeAnnotation = convertAnnotToDF(ProbeAnnotation)
 
     cat("Mapping probes to genes...\n")
@@ -419,8 +424,7 @@ EpiMix <- function(methylation.data,
       target.probes = EpiMix_GetData("EPIC_lncRNA_probes")
     }
 
-    overlapProbes = target.probes[which(names(target.probes) %in% rownames(gene.expression.data))]
-    overlapProbes = unique(overlapProbes)
+    overlapProbes = unique(target.probes[which(names(target.probes) %in% rownames(gene.expression.data))])
     overlapProbes = intersect(overlapProbes, rownames(methylation.data))
     methylation.data = methylation.data[overlapProbes,,drop = F]
 
@@ -497,7 +501,9 @@ EpiMix <- function(methylation.data,
     cat("Running", mode, "mode...\n")
     ### Step 1: filter enhancer probes
     cat("Fetching probe annotation...\n")
-    ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+    suppressMessages({
+      ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
+    })
     selectedEpigenomes = validEpigenomes(roadmap.epigenome.groups, roadmap.epigenome.ids)
     if(length(selectedEpigenomes) == 0){
       stop("Must input valid Roadmap Epigenome IDs or epigenome groups")
@@ -519,7 +525,8 @@ EpiMix <- function(methylation.data,
       RoadMap.enhancer.probes <- getRoadMapEnhancerProbes(met.platform = met.platform,
                                                           genome = genome,
                                                           functional.regions = chromatin.states,
-                                                          listOfEpigenomes = selectedEpigenomes)
+                                                          listOfEpigenomes = selectedEpigenomes,
+                                                          ProbeAnnotation = ProbeAnnotation)
 
       distal.probes <- names(get.feature.probe(met.platform = met.platform, genome = genome))
       enhancer.probes = intersect(distal.probes, RoadMap.enhancer.probes$probeID)

@@ -8,7 +8,8 @@ getRoadMapEnhancerProbes(
   met.platform = "EPIC",
   genome = "hg38",
   functional.regions = c("EnhA1", "EnhA2"),
-  listOfEpigenomes = NULL
+  listOfEpigenomes = NULL,
+  ProbeAnnotation
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ getRoadMapEnhancerProbes(
 \item{functional.regions}{character vector indicating the MNEMONIC chromatin states that will be retrieved from the Roadmap epigenomics. Default values are the active enhancers:"EnhA1", "EnhA2".}
 
 \item{listOfEpigenomes}{character vector indicting which epigenome(s) to use for finding enhancers.}
+
+\item{ProbeAnnotation}{GRange object of probe annotation.}
 }
 \value{
 a dataframe with enhancer probes and their chromosome coordinates

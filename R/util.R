@@ -29,6 +29,9 @@ NULL
 #' @importFrom rlang .data
 NULL
 
+#' @importFrom ExperimentHub ExperimentHub
+NULL
+
 utils::globalVariables(c("org.Hs.eg.db", "TxDb.Hsapiens.UCSC.hg19.knownGene", "i", "."))
 
 #' The EpiMix_getInfiniumAnnotation function
@@ -40,13 +43,14 @@ utils::globalVariables(c("org.Hs.eg.db", "TxDb.Hsapiens.UCSC.hg19.knownGene", "i
 #' @keywords internal
 
 EpiMix_getInfiniumAnnotation <- function(plat = "EPIC", genome = "hg38"){
-  ProbeAnnotation = sesameData :: sesameDataGetAnno(paste0(plat, "/", plat, "." ,genome, ".manifest.rds"))
-  # if(tolower(genome) == "hg19" & toupper(plat) == "HM27" ) ProbeAnnotation = sesameData::sesameDataGet("HM27.hg19.manifest")
-  # if(tolower(genome) == "hg19" & toupper(plat) == "HM450" ) ProbeAnnotation = sesameData::sesameDataGet("HM450.hg19.manifest")
-  # if(tolower(genome) == "hg19" & toupper(plat) == "EPIC" ) ProbeAnnotation = sesameData::sesameDataGet("EPIC.hg19.manifest")
-  # if(tolower(genome) == "hg38" & toupper(plat) == "HM27" ) ProbeAnnotation = sesameData::sesameDataGet("HM27.hg38.manifest")
-  # if(tolower(genome) == "hg38" & toupper(plat) == "HM450" ) ProbeAnnotation = sesameData::sesameDataGet("HM450.hg38.manifest")
-  # if(tolower(genome) == "hg38" & toupper(plat) == "EPIC" ) ProbeAnnotation = sesameData::sesameDataGet("EPIC.hg38.manifest")
+  hubID <- NULL
+  if(tolower(genome) == "hg19" & toupper(plat) == "HM27") hubID = "EH3672"
+  if(tolower(genome) == "hg38" & toupper(plat) == "HM27") hubID = "EH3673"
+  if(tolower(genome) == "hg19" & toupper(plat) == "HM450") hubID = "EH3674"
+  if(tolower(genome) == "hg38" & toupper(plat) == "HM450") hubID = "EH3675"
+  if(tolower(genome) == "hg19" & toupper(plat) == "EPIC") hubID = "EH3670"
+  if(tolower(genome) == "hg38" & toupper(plat) == "EPIC") hubID = "EH3671"
+  ProbeAnnotation <-  ExperimentHub :: ExperimentHub()[[hubID]]
   return(ProbeAnnotation)
 }
 
@@ -588,6 +592,7 @@ EpiMix_ModelGeneExpression <- function(methylation.data, gene.expression.data, P
 #' @param genome character string indicating the genome build version, can be either "hg19" or "hg38"
 #' @param functional.regions character vector indicating the MNEMONIC chromatin states that will be retrieved from the Roadmap epigenomics. Default values are the active enhancers:"EnhA1", "EnhA2".
 #' @param listOfEpigenomes character vector indicting which epigenome(s) to use for finding enhancers.
+#' @param ProbeAnnotation GRange object of probe annotation.
 #' @return a dataframe with enhancer probes and their chromosome coordinates
 #' @keywords internal
 #' @examples
@@ -603,7 +608,11 @@ EpiMix_ModelGeneExpression <- function(methylation.data, gene.expression.data, P
 #'
 #' }
 
-getRoadMapEnhancerProbes <- function(met.platform = "EPIC", genome = "hg38", functional.regions=c("EnhA1", "EnhA2"), listOfEpigenomes = NULL){
+getRoadMapEnhancerProbes <- function(met.platform = "EPIC",
+                                     genome = "hg38",
+                                     functional.regions=c("EnhA1", "EnhA2"),
+                                     listOfEpigenomes = NULL,
+                                     ProbeAnnotation){
 
   # Step 1. Find all the filenames ending with "_18_core_K27ac_hg38lift_mnemonics.bed.gz" from the Roadmap Epigenomics web portal
   K27Ac_url <- "https://egg2.wustl.edu/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/core_K27ac/jointModel/final/"
@@ -632,11 +641,7 @@ getRoadMapEnhancerProbes <- function(met.platform = "EPIC", genome = "hg38", fun
     }
   }
 
-  # Step 3. Get probe annotation as a GRange object
-  cat("Getting probe annotation...\n")
-  ProbeAnnotation <- EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
-
-  # Step 4. Get overlaps between probes and enhancers
+  # Step 3. Get overlaps between probes and enhancers
   enhancerProbes = character(0)
   for(file in filenames){
     destfile = paste0(dir, "/", file)
@@ -651,7 +656,7 @@ getRoadMapEnhancerProbes <- function(met.platform = "EPIC", genome = "hg38", fun
     enhancerProbes = c(enhancerProbes, names(target.probes))
     enhancerProbes = unique(enhancerProbes)
   }
-  # Step 5. Generate a dataframe for enhancer probes with their coordinates
+  # Step 4. Generate a dataframe for enhancer probes with their coordinates
   probe.ID = names(ProbeAnnotation)
   probe.chr = GenomicRanges :: seqnames(ProbeAnnotation)
   probe.start.pos = GenomicRanges :: start(ranges(ProbeAnnotation))
