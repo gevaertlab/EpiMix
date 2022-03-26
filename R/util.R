@@ -847,6 +847,8 @@ get.survival.probe <- function(EpiMixResults,
   survival.results <- survival.results[survival.results$p.value < pval.threshold, , drop = FALSE]
   survival.results <- survival.results %>%
                       dplyr :: select(.data$Probe, .data$Genes, .data$State, .data$HR, .data$lower.cl, .data$higher.cl,.data$p.value)
+  survival.results <- dplyr :: distinct(survival.results)
+  survival.results <- survival.results[order(survival.results$Genes, survival.results$HR, decreasing = TRUE), ]
   rownames(survival.results) = NULL
   cat("Found", nrow(survival.results), "survival predictive CpGs\n")
 

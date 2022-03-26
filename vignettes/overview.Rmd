@@ -4,7 +4,7 @@ subtitle: "A comprehensive tool for the population-level analysis of DNA methyla
 author: |
     | Yuanning Zheng, John Jun, Kevin Brennan and Olivier Gevaert
     |
-    | Stanford Center for Biomedical Informatic Research (BIMR)
+    | Stanford Center for Biomedical Informatics Research (BIMR)
     | Department of Medicine
     | 1265 Welch Road
     | Stanford CA, 94305-5479
