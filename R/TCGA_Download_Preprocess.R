@@ -999,11 +999,12 @@ TCGA_Download_GeneExpression <- function(CancerSite,TargetDirectory, mode = "Reg
         }
       }
     }else {
-      cat('Searching lncRNA data for:',CancerSite,"\n")
-      url = "https://github.com/gevaertlab/ncRNA_pancancer_new/raw/main/"
-      destfile = paste0(TargetDirectory, "/", CancerSite, "_lncRNA.txt")
-      downloader::download(paste0(url,CancerSite, "_lncRNA.txt"), destfile)
-      MAdirectories = destfile
+      cat('Downloading lncRNA data for:',CancerSite,"\n")
+      #url = "https://github.com/gevaertlab/ncRNA_pancancer_new/raw/main/"
+      #destfile = paste0(TargetDirectory, "/", CancerSite, "_lncRNA.txt")
+      #downloader::download(paste0(url,CancerSite, "_lncRNA.txt"), destfile)
+      #MAdirectories = destfile
+      MAdirectories = getLncRNAData(CancerSite)
     }
     return(MAdirectories=MAdirectories)
 }
@@ -1661,4 +1662,13 @@ Preprocess_CancerSite_Methylation27k <- function(CancerSite, METdirectory, doBat
   }
 
   return(list(MET_Data_Cancer=MET_Data_Cancer,MET_Data_Normal=MET_Data_Normal))
+}
+
+
+getLncRNAData <- function(CancerSite){
+  eh = ExperimentHub:: ExperimentHub()
+  data = query(eh, "EpiMix.data")
+  hub_id = data$ah_id[which(data$title == paste0(CancerSite, "_lncRNA.txt"))]
+  path = eh[[hub_id]]
+  return(path)
 }

@@ -147,7 +147,10 @@ EpiMix_PlotGene <- function(gene.name,
   )
 
   # gene.data contain the transcript information for all the genes in the designated plot region, we need to filter the information to the gene specified by the users
-  gene_id_map = AnnotationDbi::select(org.Hs.eg.db, keys = gene.name, columns = c("ENTREZID"), keytype = "SYMBOL")
+  suppressMessages({
+    gene_id_map = AnnotationDbi::select(org.Hs.eg.db, keys = gene.name, columns = c("ENTREZID"), keytype = "SYMBOL")
+  })
+
   gene.id = gene_id_map$ENTREZID
   genes.data$genes = genes.data$genes[gene.id]
   genes.data$transcripts = genes.data$transcripts[gene.id]

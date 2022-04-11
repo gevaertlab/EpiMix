@@ -430,6 +430,7 @@ getFunctionalGenes <- function(target.probe,
   hypo_prev = prev$hypo
   hyper_prev = prev$hyper
   # modeling gene expression
+  MET_matrix <- filterMethMatrix(MET_matrix, gene.expression.data)
   gene.expr <- model.gene.expression(target.probe, MET_matrix, gene.expression.data, target.genes, state)
   if(is.null(gene.expr)) return(NULL)
   # find the permutation p values of this probe
@@ -719,9 +720,11 @@ mapTranscriptToGene <- function(transcripts){
 #' The get.survival.probe function
 #' @description Get probes whose methylation state is predictive of patient survival
 #' @param EpiMixResults List of objects returned from the EpiMix function
-#' @param TCGA_CancerSite TCGA cancer code (e.g. "LUAD")
-#' @param clinical.data (If the TCGA_CancerSite parameter has been specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: "sample.id", "days_to_death", "days_to_last_follow_up".
-#' @param pval.threshold numeric value indicting the p value threshold for selecting the survival predictive probes. Survival time is compared by log-rank test. Default: 0.05
+#' @param TCGA_CancerSite String indicating the TCGA cancer code (e.g. "LUAD")
+#' @param clinical.data (If the TCGA_CancerSite is specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: "sample.id", "days_to_death", "days_to_last_follow_up".
+#' @param raw.pval.threshold numeric value indicting the raw p value threshold for selecting the survival predictive probes. Survival time is compared by log-rank test. Default: 0.05
+#' @param p.adjust.method character string indicating the statistical method for adjusting multiple comparisons, can be either of "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none". Default: "fdr"
+#' @param adjusted.pval.threshold numeric value indicting the adjusted p value threshold for selecting the survival predictive probes. Default: 0.05
 #' @param OutputRoot path to save the output. If not null, the return value will be saved as "Survival)Probes.csv".
 #' @return a dataframe with probes whose methylation state is predictive of patient survival and the p value.
 #' @export
@@ -743,7 +746,9 @@ mapTranscriptToGene <- function(transcripts){
 get.survival.probe <- function(EpiMixResults,
                                TCGA_CancerSite = NULL,
                                clinical.data = NULL,
-                               pval.threshold = 0.05,
+                               raw.pval.threshold = 0.05,
+                               p.adjust.method = "none",
+                               adjusted.pval.threshold = 0.05,
                                OutputRoot = ""){
 
   if(!requireNamespace("survival")){
@@ -796,7 +801,7 @@ get.survival.probe <- function(EpiMixResults,
   DMvalues <- EpiMixResults$MethylationStates
   DMvalues <-TCGA_GENERIC_CleanUpSampleNames(DMvalues, 12)
 
-  cat("Finding survival associated genes\n")
+  cat("Finding survival-associated CpGs\n")
   target.probes <- rownames(DMvalues)
   iterations <- length(target.probes)
   Probe <- State <- pval <- hazard.ratio <- low.conf <- high.conf <- character(0)
@@ -816,7 +821,7 @@ get.survival.probe <- function(EpiMixResults,
       normal <-  names(DM.value)[which(DM.value > 0)]
     }
 
-    if(length(abnormal) < 20 | length(normal) < 20){
+    if(length(abnormal) < 10 | length(normal) < 10){
       next()
     }
     normal <- data.frame(sample.id = normal, State = 1)
@@ -836,19 +841,24 @@ get.survival.probe <- function(EpiMixResults,
     low.conf <- c(low.conf, low.cl)
     high.conf <- c(high.conf, high.cl)
   }
+
+  adjusted.pval <- p.adjust(pval, method = p.adjust.method)
   survival.results <- data.frame(Probe = Probe,
                                  State = State,
                                  HR = hazard.ratio,
-                                 lower.cl = low.conf,
-                                 higher.cl = high.conf,
-                                 p.value = pval)
+                                 lower.Cl = low.conf,
+                                 higher.Cl = high.conf,
+                                 p.value = pval,
+                                 adjusted.p.value = adjusted.pval)
+
+  # Add annotation to CpGs
   survival.results <- merge(survival.results, ProbeAnnotation)
-  survival.results <- survival.results[order(survival.results$p.value), ]
-  survival.results <- survival.results[survival.results$p.value < pval.threshold, , drop = FALSE]
   survival.results <- survival.results %>%
-                      dplyr :: select(.data$Probe, .data$Genes, .data$State, .data$HR, .data$lower.cl, .data$higher.cl,.data$p.value)
-  survival.results <- dplyr :: distinct(survival.results)
-  survival.results <- survival.results[order(survival.results$Genes, survival.results$HR, decreasing = TRUE), ]
+                      dplyr :: select(.data$Probe, .data$Genes, .data$State, .data$HR, .data$lower.Cl, .data$higher.Cl, .data$p.value, .data$adjusted.p.value) %>%
+                      dplyr :: distinct() %>%
+                      dplyr :: filter(.data$p.value < raw.pval.threshold) %>%
+                      dplyr :: filter(.data$adjusted.p.value < adjusted.pval.threshold) %>%
+                      dplyr :: arrange(.data$adjusted.p.value, .data$Genes, .data$HR, decreasing = TRUE)
   rownames(survival.results) = NULL
   cat("Found", nrow(survival.results), "survival predictive CpGs\n")
 
@@ -858,7 +868,6 @@ get.survival.probe <- function(EpiMixResults,
   }
   return(survival.results)
 }
-
 
 #' EpiMix_PlotSurvival function
 #' @description function to plot Kaplan-meier survival curves for patients with different methylation state of a specific probe.
@@ -870,10 +879,8 @@ get.survival.probe <- function(EpiMixResults,
 #' @param font.x numeric value indicating the font size of the x axis label. Default: 16
 #' @param font.y numeric value indicating the font size of the y axis label. Default: 16
 #' @param font.tickslab numeric value indicating the font size of the axis tick label. Default: 14
-#' @param legend numeric vector indicating the x,y coordinate for positioning the figure legend. c(0,0) indicates bottom left, while c(1,1) indicates top right. Default: c(0.8,0.9). If "None", legend will be removed.
-#' @param width numeric value with graph width in pixels to save. Default: 700
-#' @param height numeric values with graph height in pixels to save. Default: 480
-#' @param OutputRoot file path to save the graph.
+#' @param legend numeric vector indicating the x,y coordinate for positioning the figure legend. c(0,0) indicates bottom left, while c(1,1) indicates top right. Default: c(0.8,0.9). If "none", legend will be removed.
+#' @param show.p.value logic indicating whether to show p value in the plot. P value was calculated by log-rank test.  Default: TRUE.
 #'
 #' @return Kaplan-meier survival curve showing the survival time for patients with different methylation states of the probe.
 #' @export
@@ -901,9 +908,8 @@ EpiMix_PlotSurvival <- function(EpiMixResults,
                                 font.y = 16,
                                 font.tickslab = 14,
                                 legend= c(0.8,0.9),
-                                width = 700,
-                                height = 480,
-                                OutputRoot = ""){
+                                show.p.value = TRUE
+                                ){
 
   if(!requireNamespace("survival")){
     message("This function requires the 'survival' package.")
@@ -957,7 +963,7 @@ EpiMix_PlotSurvival <- function(EpiMixResults,
   target.survival <- target.survival[order(target.survival$State), ]
   survival <- survminer :: ggsurvplot(
     survminer :: surv_fit(survival :: Surv(time, status) ~ State, data = target.survival),
-    pval = TRUE,
+    pval = show.p.value,
     legend.title = "mixture component",
     legend.labs = unique(target.survival$State),
     xlab = "Days",
@@ -969,12 +975,6 @@ EpiMix_PlotSurvival <- function(EpiMixResults,
     font.tickslab = c(font.tickslab),
     legend = legend
   )
-  if(OutputRoot != ""){
-    png(filename = paste0(OutputRoot, "/", plot.probe, "_survival.png"),
-        width=700, height=480)
-    print(survival)
-    dev.off()
-  }
   return(survival)
 }
 
@@ -1060,7 +1060,9 @@ function.enrich <- function(EpiMixResults,
             dplyr :: select(.data$Gene, .data$`Fold change of gene expression`) %>%
             dplyr :: group_by(.data$Gene) %>%
             dplyr :: summarize(Avg.expr = mean(.data$`Fold change of gene expression`, na.rm = TRUE))
-  gene_id_map = AnnotationDbi::select(org.Hs.eg.db, keys = df.gene$Gene, columns = c("ENTREZID"), keytype = "SYMBOL")
+  suppressMessages({
+    gene_id_map = AnnotationDbi::select(org.Hs.eg.db, keys = df.gene$Gene, columns = c("ENTREZID"), keytype = "SYMBOL")
+  })
   if(sum(is.na(gene_id_map$ENTREZID)) > 0){
     absentGenes = gene_id_map$SYMBOL[which(is.na(gene_id_map$ENTREZID))]
     warning(paste0("Can not find ENTREZID for ", length(absentGenes)," genes.", "These genes can not be included in the enrichment analysis:\n", paste0(absentGenes, collapse = ",")))
@@ -1078,8 +1080,8 @@ function.enrich <- function(EpiMixResults,
     ego <- clusterProfiler :: simplify(ego, cutoff = cutoff)
   }
 
-  if(length(save.dir) > 0){
-    save.file.name <- paste0(save.dir, "/", "FunctionEnrichment_", enrich.method, ".csv")
+  if(save.dir != "" & length(save.dir) > 0){
+    save.file.name <- paste0(save.dir, "/", "FunctionEnrichment_", enrich.method, "_", methylation.state, ".csv")
     utils :: write.csv(ego@result, save.file.name, row.names = FALSE)
   }
   return(ego)

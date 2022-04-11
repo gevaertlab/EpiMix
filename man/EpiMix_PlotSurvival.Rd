@@ -14,9 +14,7 @@ EpiMix_PlotSurvival(
   font.y = 16,
   font.tickslab = 14,
   legend = c(0.8, 0.9),
-  width = 700,
-  height = 480,
-  OutputRoot = ""
+  show.p.value = TRUE
 )
 }
 \arguments{
@@ -36,13 +34,9 @@ EpiMix_PlotSurvival(
 
 \item{font.tickslab}{numeric value indicating the font size of the axis tick label. Default: 14}
 
-\item{legend}{numeric vector indicating the x,y coordinate for positioning the figure legend. c(0,0) indicates bottom left, while c(1,1) indicates top right. Default: c(0.8,0.9). If "None", legend will be removed.}
+\item{legend}{numeric vector indicating the x,y coordinate for positioning the figure legend. c(0,0) indicates bottom left, while c(1,1) indicates top right. Default: c(0.8,0.9). If "none", legend will be removed.}
 
-\item{width}{numeric value with graph width in pixels to save. Default: 700}
-
-\item{height}{numeric values with graph height in pixels to save. Default: 480}
-
-\item{OutputRoot}{file path to save the graph.}
+\item{show.p.value}{logic indicating whether to show p value in the plot. P value was calculated by log-rank test.  Default: TRUE.}
 }
 \value{
 Kaplan-meier survival curve showing the survival time for patients with different methylation states of the probe.

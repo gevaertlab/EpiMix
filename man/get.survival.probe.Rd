@@ -8,18 +8,24 @@ get.survival.probe(
   EpiMixResults,
   TCGA_CancerSite = NULL,
   clinical.data = NULL,
-  pval.threshold = 0.05,
+  raw.pval.threshold = 0.05,
+  p.adjust.method = "fdr",
+  adjusted.pval.threshold = 0.05,
   OutputRoot = ""
 )
 }
 \arguments{
 \item{EpiMixResults}{List of objects returned from the EpiMix function}
 
-\item{TCGA_CancerSite}{TCGA cancer code (e.g. "LUAD")}
+\item{TCGA_CancerSite}{String indicating the TCGA cancer code (e.g. "LUAD")}
 
-\item{clinical.data}{(If the TCGA_CancerSite parameter has been specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: "sample.id", "days_to_death", "days_to_last_follow_up".}
+\item{clinical.data}{(If the TCGA_CancerSite is specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: "sample.id", "days_to_death", "days_to_last_follow_up".}
 
-\item{pval.threshold}{numeric value indicting the p value threshold for selecting the survival predictive probes. Survival time is compared by log-rank test. Default: 0.05}
+\item{raw.pval.threshold}{numeric value indicting the raw p value threshold for selecting the survival predictive probes. Survival time is compared by log-rank test. Default: 0.05}
+
+\item{p.adjust.method}{character string indicating the statistical method for adjusting multiple comparisons, can be either of "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none". Default: "fdr"}
+
+\item{adjusted.pval.threshold}{numeric value indicting the adjusted p value threshold for selecting the survival predictive probes. Default: 0.05}
 
 \item{OutputRoot}{path to save the output. If not null, the return value will be saved as "Survival)Probes.csv".}
 }

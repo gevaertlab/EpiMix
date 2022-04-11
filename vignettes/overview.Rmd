@@ -12,7 +12,6 @@ date: "`r Sys.Date()`"
 package: EpiMix
 output: 
   html_document:
-  #rmarkdown::html_vignette:
     toc: true
     toc_float: true
     toc_depth: 4

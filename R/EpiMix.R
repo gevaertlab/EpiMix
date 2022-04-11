@@ -282,14 +282,14 @@ EpiMix <- function(methylation.data,
       GeneProbeMap = GeneProbeMap[GeneProbeMap$gene %in% rownames(gene.expression.data), , drop = F]
       colnames(GeneProbeMap) = c("Gene", "Probe")
 
-      unqiueGenes = unique(GeneProbeMap$Gene)
-      iterations = length(unqiueGenes)
+      uniqueGenes = unique(GeneProbeMap$Gene)
+      iterations = length(uniqueGenes)
       pb <- utils :: txtProgressBar(max = iterations, style = 3)
 
       FunctionalPairs = data.frame()
       if(cores == "" | cores == 1){
         for(i in 1:iterations){
-          gene = unqiueGenes[i]
+          gene = uniqueGenes[i]
           probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
           pairs = getFunctionalProbes(gene, probes, MET_matrix, MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
           FunctionalPairs = rbind(FunctionalPairs, pairs)
@@ -300,7 +300,7 @@ EpiMix <- function(methylation.data,
         progress <- function(n) utils :: setTxtProgressBar(pb, n)
         opts <- list(progress = progress)
         FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
-          gene = unqiueGenes[i]
+          gene = uniqueGenes[i]
           probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
           getFunctionalProbes(gene, probes, MET_matrix,  MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
         }
@@ -381,7 +381,7 @@ EpiMix <- function(methylation.data,
         progress <- function(n) utils :: setTxtProgressBar(pb, n)
         opts <- list(progress = progress)
         FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
-          gene = unqiueGenes[i]
+          gene = uniqueGenes[i]
           probes = intersect(miRNA.probes$probe[which(miRNA.probes$gene == gene)], rownames(MET_matrix))
           getFunctionalProbes(gene, probes, MET_matrix,  MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
         }
@@ -465,14 +465,14 @@ EpiMix <- function(methylation.data,
       GeneProbeMap = GeneProbeMap[GeneProbeMap$gene %in% rownames(gene.expression.data), , drop = F]
       colnames(GeneProbeMap) = c("Gene", "Probe")
 
-      unqiueGenes = unique(GeneProbeMap$Gene)
-      iterations = length(unqiueGenes)
+      uniqueGenes = unique(GeneProbeMap$Gene)
+      iterations = length(uniqueGenes)
       pb <- utils :: txtProgressBar(max = iterations, style = 3)
 
       FunctionalPairs = data.frame()
       if(cores == "" | cores == 1){
         for(i in 1:iterations){
-          gene = unqiueGenes[i]
+          gene = uniqueGenes[i]
           probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
           pairs = getFunctionalProbes(gene, probes, MET_matrix, MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
           FunctionalPairs = rbind(FunctionalPairs, pairs)
@@ -483,7 +483,7 @@ EpiMix <- function(methylation.data,
         progress <- function(n) utils :: setTxtProgressBar(pb, n)
         opts <- list(progress = progress)
         FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
-          gene = unqiueGenes[i]
+          gene = uniqueGenes[i]
           probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
           getFunctionalProbes(gene, probes, MET_matrix, MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
         }
@@ -550,11 +550,11 @@ EpiMix <- function(methylation.data,
     MET_matrix_control <- matrix(0, nrow(MET_matrix), ncol(MET_Control))
     colnames(MET_matrix_control) <- colnames(MET_Control)
     MET_matrix <- cbind(MET_matrix, MET_matrix_control)
-    MET_matrix <- filterMethMatrix(MET_matrix, gene.expression.data)
+    MET_matrix_filtered <- filterMethMatrix(MET_matrix, gene.expression.data)
 
-    if(nrow(MET_matrix) > 0 & ncol(MET_matrix) > 0){
+    if(nrow(MET_matrix_filtered) > 0 & ncol( MET_matrix_filtered) > 0){
       # get nearby genes for the differentially methylated CpG probes
-      DM.probes = rownames(MET_matrix)
+      DM.probes = rownames(MET_matrix_filtered)
       geneAnnot <- getTSS(genome = genome) #ELMER function to retrieve a GRange object that contains coordinates of promoters for human genome.
       DM.probes.annotation = ProbeAnnotation[which(names(ProbeAnnotation) %in% DM.probes), ,drop = F]
       NearbyGenes <- GetNearGenes(geneAnnot = geneAnnot,
@@ -569,7 +569,6 @@ EpiMix <- function(methylation.data,
       FunctionalPairs = data.frame()
       if(cores == "" | cores == 1){
         for(i in 1:iterations){
-          print(i)
           target.probe = DM.probes[i]
           state = methylation.states[target.probe]
           target.genes =  NearbyGenes$Symbol[which(NearbyGenes$ID == target.probe)]
@@ -619,6 +618,7 @@ EpiMix <- function(methylation.data,
 
   if(!is.null(MethylMixResults$FunctionalPairs)){
     cat("Found", nrow(MethylMixResults$FunctionalPairs), "functional probe-gene pairs.\n")
+    MethylMixResults$FunctionalPairs =  MethylMixResults$FunctionalPairs[order(MethylMixResults$FunctionalPairs$Gene), ]
   }
 
   # Save the sample names for the experiment and the control groups (used for the EpiMix_plotModel function)
@@ -626,7 +626,7 @@ EpiMix <- function(methylation.data,
   MethylMixResults$group.2 = colnames(MET_Control)
 
   # Save the output
-  if (OutputRoot != "") {
+  if (!is.null(OutputRoot) & OutputRoot != "") {
     cat("Saving the EpiMix results to the output directory...\n")
     saveRDS(MethylMixResults, file = paste0(OutputRoot, "/", "EpiMix_Results_",mode,".rds"))
     utils :: write.csv(MethylMixResults$FunctionalPairs, paste0(OutputRoot, "/", "FunctionalPairs_", mode,".csv"), row.names = FALSE )

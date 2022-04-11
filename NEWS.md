@@ -1,6 +1,6 @@
 ---
-title: "EpiMix 0.99.0"
+title: "EpiMix"
 output: html_document
 ---
 -------
-* 2022-01-26: Submitted to Bioconductor
+* 2022-03-26: Submitted to Bioconductor
