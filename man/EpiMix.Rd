@@ -14,7 +14,7 @@ EpiMix(
   promoters = FALSE,
   met.platform = "HM450",
   genome = "hg38",
-  listOfProbes = NULL,
+  listOfGenes = NULL,
   raw.pvalue.threshold = 0.05,
   adjusted.pvalue.threshold = 0.05,
   numFlankingGenes = 20,
@@ -48,7 +48,7 @@ Should contain two columns: the first column (named "primary") indicates the sam
 
 \item{genome}{Character string indicating the genome build version to be used for CpG annotation. Should be either "hg19" or "hg38". Default: "hg38".}
 
-\item{listOfProbes}{Character vector used for filtering the CpGs to be evaluated.}
+\item{listOfGenes}{Character vector used for filtering the genes to be evaluated.}
 
 \item{raw.pvalue.threshold}{Numeric value indicating the threshold of the raw P value for selecting the functional CpG-gene pairs. Default: 0.05.}
 

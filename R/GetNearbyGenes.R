@@ -222,6 +222,7 @@ GetNearGenes <- function(data = NULL,
 #' @param cores Number fo cores to be used. Deafult: 1
 #' @param met.platform DNA methyaltion platform to retrieve data from: EPIC or 450K (default)
 #' @param genome Which genome build will be used: hg38 (default) or hg19.
+#' @return a dataframe of nearest genes with distance to TSS.
 addDistNearestTSS <- function(
   data,
   NearGenes,

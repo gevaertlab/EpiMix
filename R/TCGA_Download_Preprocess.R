@@ -1665,8 +1665,14 @@ Preprocess_CancerSite_Methylation27k <- function(CancerSite, METdirectory, doBat
 }
 
 
+#' The getLncRNAData function
+#' @description Helper function to retrieve the lncRNA expression data from Experiment Hub
+#' @param CancerSite TCGA cancer code
+#'
+#' @return local file path where the lncRNA expression data are saved
+
 getLncRNAData <- function(CancerSite){
-  eh = ExperimentHub:: ExperimentHub()
+  eh = ExperimentHub :: ExperimentHub()
   data = query(eh, "EpiMix.data")
   hub_id = data$ah_id[which(data$title == paste0(CancerSite, "_lncRNA.txt"))]
   path = eh[[hub_id]]

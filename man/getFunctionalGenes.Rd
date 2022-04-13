@@ -6,10 +6,8 @@
 \usage{
 getFunctionalGenes(
   target.probe,
-  state,
   target.genes,
   MET_matrix,
-  MET_Control,
   gene.expression.data,
   ProbeAnnotation,
   raw.pvalue.threshold = 0.05,
@@ -19,13 +17,9 @@ getFunctionalGenes(
 \arguments{
 \item{target.probe}{character string indicating the probe to be evaluated.}
 
-\item{state}{character string indicating the methylation state of the probe, should be either "Hyper", "Hypo" or "Dual".}
-
 \item{target.genes}{character vector indicating the nearby genes of the target probe.}
 
 \item{MET_matrix}{methylation data matrix for CpGs from group.1 and group.2.}
-
-\item{MET_Control}{methylation data matrix for CpGs from group.2.}
 
 \item{gene.expression.data}{gene expression data matrix.}
 

@@ -34,7 +34,7 @@ NULL
 #' @param promoters Logic indicating whether to focus the analysis on CpGs associated with promoters (2000 bp upstream and 1000 bp downstream of the transcription start site). This parameter is only used for the Regular mode.
 #' @param met.platform Character string indicating the microarray type for collecting the DNA methylation data. The value should be either "HM27", "HM450" or "EPIC". Default: "HM450"
 #' @param genome Character string indicating the genome build version to be used for CpG annotation. Should be either "hg19" or "hg38". Default: "hg38".
-#' @param listOfProbes Character vector used for filtering the CpGs to be evaluated.
+#' @param listOfGenes Character vector used for filtering the genes to be evaluated.
 #' @param raw.pvalue.threshold Numeric value indicating the threshold of the raw P value for selecting the functional CpG-gene pairs. Default: 0.05.
 #' @param adjusted.pvalue.threshold Numeric value indicating the threshold of the adjusted P value for selecting the function CpG-gene pairs. Default: 0.05.
 #' @param numFlankingGenes Numeric value indicating the number of flanking genes whose expression is to be evaluated for selecting the functional enhancers. Default: 20.
@@ -116,7 +116,7 @@ EpiMix <- function(methylation.data,
                    promoters = FALSE,
                    met.platform = "HM450",
                    genome = "hg38",
-                   listOfProbes = NULL,
+                   listOfGenes = NULL,
                    raw.pvalue.threshold = 0.05,
                    adjusted.pvalue.threshold = 0.05,
                    numFlankingGenes = 20,
@@ -130,11 +130,11 @@ EpiMix <- function(methylation.data,
 ) {
 
   ### Process 1: Check user input
-  if (missing(methylation.data)) stop("Need to provide CpG methylation matrix\n")
-  if (missing(gene.expression.data)) stop("Need to provide gene expression matrix\n")
+  if (missing(methylation.data)) stop("Need to provide DNA methylation matrix\n")
+  #if (missing(gene.expression.data)) stop("Need to provide gene expression matrix\n")
   stopifnot(
     is.matrix(methylation.data),
-    is.matrix(gene.expression.data) | is.data.frame(gene.expression.data),
+    is.null(gene.expression.data) | is.matrix(gene.expression.data) | is.data.frame(gene.expression.data),
     class(mode) == "character",
     class(sample.info) %in% c("data.frame", "matrix"),
     class(group.1) %in% c("character", "NULL"),
@@ -142,7 +142,7 @@ EpiMix <- function(methylation.data,
     class(promoters) == "logical",
     class(met.platform) == "character",
     class(genome) == "character",
-    class(listOfProbes) %in% c("character", "NULL"),
+    class(listOfGenes) %in% c("character", "NULL"),
     #class(filter) == "logical",
     class(raw.pvalue.threshold) == "numeric",
     class(adjusted.pvalue.threshold) == "numeric",
@@ -158,27 +158,28 @@ EpiMix <- function(methylation.data,
   if(nrow(methylation.data) == 0){
     stop("methylation.data matrix is empty, please check the methyaltion.data matrix\n")
   }
-  if(nrow(gene.expression.data) == 0){
+  if(!is.null(gene.expression.data) & length(gene.expression.data) == 0){
     stop("gene.expression.data matrix is empty, please check the gene.expression.data matrix\n")
   }
-  if (!tolower(mode) %in% c("regular", "enhancer", "mirna", "lncrna")) stop ("'mode' must be one of the followings: 'Regular', 'Enhancer', 'miRNA', 'lncRNA'")
+  if (!mode %in% c("Regular", "Enhancer", "miRNA", "lncRNA")) stop ("'mode' must be one of the followings: 'Regular', 'Enhancer', 'miRNA', 'lncRNA'")
   if (is.null(sample.info)){
-    warning("The 'sample.info' is not provided. EpiMix will treat all samples as one group (i.e., no comparison will be made between the experiment and the control group) !!!\n")
+    warning("'sample.info' is not provided. EpiMix will treat all samples as one group (i.e., no comparison will be made between the experiment and the control group) !!!\n")
   }
   if (!is.null(sample.info) & (is.null(group.1) | is.null(group.2))){
     warning("Only zero or one group is sepecfied. EpiMix will treat all samples as one group (i.e., no comparison will be made between the experiment and the control group) !!!\n")
   }
 
-  if (length(met.platform)!=1 & !toupper(met.platform) %in% c("EPIC", "HM450")) stop("'met.platform' must be either 'EPIC' or 'HM450'\n")
+  if (length(met.platform)!=1 & !toupper(met.platform) %in% c("EPIC", "HM450", "HM27")) stop("'met.platform' must be either 'EPIC', 'HM450', 'HM27'\n")
   if (length(genome)!=1 & tolower(genome) %in% c("hg19", "hg38")) stop("'genome' must to be either 'hg19' or 'hg38'\n")
 
   met.platform = toupper(met.platform)
   genome = tolower(genome)
-  mode = tolower(mode)
-  #suppressMessages(sesameData::sesameDataCache(met.platform))
-  if(OutputRoot!="") dir.create(OutputRoot,showWarnings=FALSE)
 
-  ### Process 2: Set up the parallel backend
+  if(!is.null(OutputRoot) & length(OutputRoot) > 0){
+    dir.create(OutputRoot,showWarnings=FALSE)
+  }
+
+  ### Process 2: Set up the parallel back-end
   if(cores>1){
     #unregister()
     cat("Registering sockets on multiple CPU cores...\n")
@@ -187,57 +188,38 @@ EpiMix <- function(methylation.data,
   }
 
   ### Process 3: filter CpG probes and samples
-  if (!is.null(listOfProbes)) {
-    listOfProbes <- intersect(listOfProbes, rownames(methylation.data))
-    methylation.data <- methylation.data[listOfProbes, ,drop = F]
-  }
-
   if(!is.null(sample.info) & !is.null(group.1) & !is.null(group.2)){
     target.samples = sample.info$primary[which(sample.info$sample.type %in% c(group.1, group.2))]
+    sample.info = sample.info[sample.info$primary %in% target.samples,]
     overlapSamples.met = intersect(colnames(methylation.data), target.samples)
     methylation.data = methylation.data[,overlapSamples.met, drop = F]
-    overlapSamples.exp = intersect(colnames(gene.expression.data), target.samples)
-    gene.expression.data = gene.expression.data[,overlapSamples.exp, drop = F]
-    sample.info = sample.info[sample.info$primary %in% target.samples,]
+    if(!is.null(gene.expression.data)){
+      overlapSamples.exp = intersect(colnames(gene.expression.data), target.samples)
+      gene.expression.data = gene.expression.data[,overlapSamples.exp, drop = F]
+    }
   }
 
   ### Process 5: run MethylMix
   #--------------------------------------------Regular mode------------------------------------------------------
-  if(mode == "regular"){
+  if(mode == "Regular"){
     cat("Running", mode, "mode...\n")
 
-    ### Step 1: Map probes to genes according to probe annotation
-    cat("Fetching probe annotation...\n")
-    suppressMessages({
-      ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
-    })
-
-    ProbeAnnotation = convertAnnotToDF(ProbeAnnotation)
-
-    cat("Mapping probes to genes...\n")
-    ProbeAnnotation = mapProbeGene(ProbeAnnotation)
-    overlapProbes = intersect(rownames(methylation.data), ProbeAnnotation$probeID)
-    methylation.data <- methylation.data[overlapProbes, ,drop = F]
-
-    if(promoters){
-      cat("Selecting probes associated with gene promoters (-2000, +1000 flanking TSS)...\n")
-      suppressMessages({
-        promoters <- get.feature.probe(met.platform = met.platform,
-                                       genome = genome,
-                                       promoter = TRUE,
-                                       TSS.range = list(upstream = 2000, downstream = 1000))
-      })
-      promoter.probes <- names(promoters)
-      overlapProbes <- intersect(promoter.probes, rownames(methylation.data))
-      cat("Found", length(overlapProbes), "promoter probes\n")
-      methylation.data <- methylation.data[overlapProbes, ,drop = F]
-    }
+    ### Step 1: filter CpGs based on user-specified conditions
+    ProbeAnnotation <- filterProbes(mode = mode,
+                                     gene.expression.data = gene.expression.data,
+                                     listOfGenes = listOfGenes,
+                                     promoters = promoters,
+                                     met.platform = met.platform,
+                                     genome = genome)
+    overlapProbes = unique(intersect(ProbeAnnotation$probe, rownames(methylation.data)))
+    methylation.data = methylation.data[overlapProbes,,drop = F]
 
     ### Step 2: modeling the gene expression using the methylation data (beta values scale) to select functional probes
-    if(is.null(MixtureModelResults)){
+    FunctionalProbes = NULL
+    if(is.null(MixtureModelResults) & !is.null(gene.expression.data)){
       FunctionalProbes =  EpiMix_ModelGeneExpression(methylation.data, gene.expression.data, ProbeAnnotation, cores = cores, filter = TRUE)
       if(length(FunctionalProbes) == 0){
-        stop("No transcriptionally predicitve probes were found.")
+        stop("No transcriptionally predicitve CpGs were found.")
       }
       if(OutputRoot != ""){
         saveRDS(FunctionalProbes, paste0(OutputRoot, "/", "FunctionalProbes_", mode, ".rds"))
@@ -252,6 +234,9 @@ EpiMix <- function(methylation.data,
     rm(methylation.data); gc()
 
     ### Step 4: modeling the methylation data as a mixture of beta distributions
+    if(is.null(FunctionalProbes)){
+      FunctionalProbes = rownames(MET_Experiment)
+    }
     if(!is.null(MixtureModelResults)){
       MethylMixResults = readRDS(MixtureModelResults)
     }else{
@@ -259,77 +244,61 @@ EpiMix <- function(methylation.data,
     }
 
     if(!is.null(MethylMixResults$MethylationDrivers)){
-      cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated probes\n")
+      cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated CpGs\n")
     }
     ### Step 5: optionally, write the intermediate output to file (test purpose only!!!)
     if (OutputRoot != "") {
       saveRDS(MethylMixResults, file = paste0(OutputRoot, "/", "EpiMix_Results_",mode,".rds"))
     }
 
-    ### Step 6: select functional probes and calculate prevalence and fold change
-    cat("Selecting transcriptionally predicitve probes...\n")
-    # Combine the methylation states for the experiment group and the control group into one matrix
+    ### Step 6: select functional CpGs and calculate prevalence and fold change
     MET_matrix <- MethylMixResults$MethylationStates
-    MET_matrix_control <- matrix(0, nrow(MET_matrix), ncol(MET_Control))
-    colnames(MET_matrix_control) <- colnames(MET_Control)
-    MET_matrix <- cbind(MET_matrix, MET_matrix_control)
-    MET_matrix <- filterMethMatrix(MET_matrix, gene.expression.data)
-
-    if(nrow(MET_matrix) > 0 & ncol(MET_matrix) > 0){
-      ProbeNames = rownames(MET_matrix)
-      methylation.states = getMethStates(MethylMixResults, ProbeNames)
-      GeneProbeMap = ProbeAnnotation[ProbeAnnotation$probeID %in% ProbeNames,c("gene", "probeID"),drop = F]
-      GeneProbeMap = GeneProbeMap[GeneProbeMap$gene %in% rownames(gene.expression.data), , drop = F]
-      colnames(GeneProbeMap) = c("Gene", "Probe")
-
-      uniqueGenes = unique(GeneProbeMap$Gene)
-      iterations = length(uniqueGenes)
-      pb <- utils :: txtProgressBar(max = iterations, style = 3)
-
-      FunctionalPairs = data.frame()
-      if(cores == "" | cores == 1){
-        for(i in 1:iterations){
-          gene = uniqueGenes[i]
-          probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
-          pairs = getFunctionalProbes(gene, probes, MET_matrix, MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-          FunctionalPairs = rbind(FunctionalPairs, pairs)
-          utils :: setTxtProgressBar(pb,i)
-        }
-      }
-      else{
-        progress <- function(n) utils :: setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-        FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
-          gene = uniqueGenes[i]
-          probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
-          getFunctionalProbes(gene, probes, MET_matrix,  MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-        }
-      }
-      close(pb)
-      rownames(FunctionalPairs) = c()
-      MethylMixResults$FunctionalPairs = FunctionalPairs
-    } else{
-      cat("Not enough differentially methylated genes or samples, can not identify functional probe-gene pairs, returning EpiMix results...\n")
+    prev.data <- get.prevalence(MethylMixResults)
+    if(is.null(gene.expression.data)){
+      # No gene expression data, just report the gene names and prevalence
+      prev.data <- addGeneNames(prev.data, ProbeAnnotation)
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Gene, .data$Probe, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
     }
+
+    ### Step 7:  modeling the gene expression and select the functional enhancer probes
+    cat("Identifying functional CpG-gene pairs...\n")
+    FunctionalPairs <- generateFunctionalPairs(MET_matrix,
+                                               MET_Control,
+                                               gene.expression.data,
+                                               ProbeAnnotation,
+                                               raw.pvalue.threshold,
+                                               adjusted.pvalue.threshold,
+                                               cores)
+    if(is.null(FunctionalPairs)){
+      cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
+      prev.data <- addGeneNames(prev.data, ProbeAnnotation)
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Probe, .data$Gene, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
+    }
+
+    # Add in the prevalence information
+    FunctionalPairs <- merge(x = prev.data, y = FunctionalPairs, by = "Probe")
+    col.order <- c("Gene", "Probe", "State", "Prevalence of hypo (%)", "Prevalence of hyper (%)", "Fold change of gene expression",
+                   "Comparators", "Raw.p", "Adjusted.p")
+    FunctionalPairs <- FunctionalPairs[, col.order]
+    FunctionalPairs <- FunctionalPairs[order(FunctionalPairs$Gene), ]
+    rownames(FunctionalPairs) = c()
+    MethylMixResults$FunctionalPairs = FunctionalPairs
   }
 
   #--------------------------------------------miRNA mode------------------------------------------------------
-  if(mode == "mirna"){
+  if(mode == "miRNA"){
     cat("Running", mode, "mode...\n")
     cat("Please be mindful that the gene expression data are expected to be data obtained from microRNA-seq.\n")
-    ### Step 1:found the miRNA probes associated with genes that have expression data
-    miRNA.probes = NULL
-    if(met.platform == "HM27"){
-      miRNA.probes = EpiMix_GetData("HM27_miRNA_probes")
-    }else if (met.platform == "HM450"){
-      miRNA.probes = EpiMix_GetData("HM450_miRNA_probes")
-    }else if (met.platform == "EPIC"){
-      miRNA.probes = EpiMix_GetData("EPIC_miRNA_probes")
-    }
-
-    # since many miRNAs  do not have gene expression data, we only select the CpGs assocated with genes with expression data available
-    miRNA.probes = miRNA.probes[miRNA.probes$gene %in% rownames(gene.expression.data), ]
-    overlapProbes = unique(intersect(miRNA.probes$probe, rownames(methylation.data)))
+    ### Step 1: filter CpGs based on user-specified conditions
+    ProbeAnnotation <- filterProbes(mode = mode,
+                                    gene.expression.data = gene.expression.data,
+                                    listOfGenes = listOfGenes,
+                                    promoters = promoters,
+                                    met.platform = met.platform,
+                                    genome = genome)
+    overlapProbes = unique(intersect(ProbeAnnotation$probe, rownames(methylation.data)))
     methylation.data = methylation.data[overlapProbes,,drop = F]
 
     ### Step 2: split methylation data into group.1 and group.2
@@ -351,84 +320,65 @@ EpiMix <- function(methylation.data,
     }
     cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated probes\n")
 
-    ### Step 4: identify transcriptionally predictive probes
-    cat("Selecting transcriptionally predicitve probes for miRNAs...\n")
-    # Combine the methylation states for the experiment group and the control group into one matrix
-    MET_matrix <- MethylMixResults$MethylationStates
-    MET_matrix_control <- matrix(0, nrow(MET_matrix), ncol(MET_Control))
-    colnames(MET_matrix_control) <- colnames(MET_Control)
-    MET_matrix <- cbind(MET_matrix, MET_matrix_control)
-    MET_matrix <- filterMethMatrix(MET_matrix, gene.expression.data)
-
-    if(nrow(MET_matrix) > 0 & ncol(MET_matrix) > 0){
-      # start modeling gene expression
-      # select the genes matched to the differentially methylated probes and the genes with gene expression data avalible
-      uniqueGenes <- unique(miRNA.probes$gene[which(miRNA.probes$probe %in% rownames(MET_matrix))])
-      methylation.states <- getMethStates(MethylMixResults, rownames(MET_matrix))
-      iterations = length(uniqueGenes)
-      pb <- utils :: txtProgressBar(max = iterations, style = 3)
-      FunctionalPairs = data.frame()
-      if(cores == "" | cores == 1){
-        for(i in 1:iterations){
-          gene = uniqueGenes[i]
-          probes = intersect(miRNA.probes$probe[which(miRNA.probes$gene == gene)], rownames(MET_matrix))
-          pairs = getFunctionalProbes(gene, probes, MET_matrix, MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-          FunctionalPairs = rbind(FunctionalPairs, pairs)
-          utils :: setTxtProgressBar(pb,i)
-        }
-      }
-      else{
-        progress <- function(n) utils :: setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-        FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
-          gene = uniqueGenes[i]
-          probes = intersect(miRNA.probes$probe[which(miRNA.probes$gene == gene)], rownames(MET_matrix))
-          getFunctionalProbes(gene, probes, MET_matrix,  MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-        }
-      }
-      close(pb)
-      rownames(FunctionalPairs) = c()
-
-      FunctionalPairs = FunctionalPairs[order(FunctionalPairs$Gene), ]
-      MethylMixResults$FunctionalPairs = FunctionalPairs
-    } else{
-      cat("Not enough differentially methylated genes, can not identify functional probe-gene pairs, returning EpiMix results...\n")
+    ### Step 4: optionally, write the intermediate output to file
+    if (OutputRoot != "") {
+      saveRDS(MethylMixResults, file = paste0(OutputRoot, "/", "EpiMix_Results_",mode,".rds"))
     }
+
+    ### Step 5: select functional CpGs and calculate prevalence and fold change
+    MET_matrix <- MethylMixResults$MethylationStates
+    prev.data <- get.prevalence(MethylMixResults)
+    if(is.null(gene.expression.data)){
+      # No gene expression data, just report the gene names and prevalence
+      prev.data <- addGeneNames(prev.data, ProbeAnnotation)
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Gene, .data$Probe, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
+    }
+
+    ### Step 6: identify transcriptionally predictive probes
+    cat("Identifying functional CpG-gene pairs...\n")
+    FunctionalPairs <- generateFunctionalPairs(MET_matrix,
+                                               MET_Control,
+                                               gene.expression.data,
+                                               ProbeAnnotation,
+                                               raw.pvalue.threshold,
+                                               adjusted.pvalue.threshold,
+                                               cores)
+    if(is.null(FunctionalPairs)){
+      cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
+      prev.data <- addGeneNames(prev.data, ProbeAnnotation)
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Probe, .data$Gene, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
+    }
+
+    # Add in the prevalence information
+    FunctionalPairs <- merge(x = prev.data, y = FunctionalPairs, by = "Probe")
+    col.order <- c("Gene", "Probe", "State", "Prevalence of hypo (%)", "Prevalence of hyper (%)", "Fold change of gene expression",
+                   "Comparators", "Raw.p", "Adjusted.p")
+    FunctionalPairs <- FunctionalPairs[, col.order]
+    FunctionalPairs <- FunctionalPairs[order(FunctionalPairs$Gene), ]
+    rownames(FunctionalPairs) = c()
+    MethylMixResults$FunctionalPairs = FunctionalPairs
   }
 
   #--------------------------------------------LncRNA Mode--------------------------------------------------------------------------------------------
-  if(mode == "lncrna"){
+  if(mode == "lncRNA"){
     cat("Running", mode, "mode...\n")
-    cat("We recommend using the kallisto-sleuth pipline to process the RNA-seq data when using the lncRNA mode. Please see our publication for details: PMID: 31808800\n")
+    cat("We recommend using the kallisto-sleuth pipline to process the RNA-seq data in order to detect more lncRNAs.
+        Please see our publication for details: PMID: 31808800\n")
 
-    ### Step 1: Map probes to genes according to probe annotation
-    cat("Fetching probe annotation...\n")
-    suppressMessages({
-      ProbeAnnotation = EpiMix_getInfiniumAnnotation(plat = met.platform, genome = genome)
-    })
-    ProbeAnnotation = convertAnnotToDF(ProbeAnnotation)
-
-    cat("Mapping probes to genes...\n")
-    ProbeAnnotation = mapProbeGene(ProbeAnnotation)
-    overlapProbes = intersect(rownames(methylation.data), ProbeAnnotation$probeID)
-    methylation.data <- methylation.data[overlapProbes, ,drop = F]
-
-    ### Step 2:found the probes that can be mapped to the present transcripts
-    cat("Loading probe information for", mode, "\n")
-    target.probes = NULL
-    if(met.platform == "HM27"){
-      target.probes = EpiMix_GetData("HM27_lncRNA_probes")
-    }else if (met.platform == "HM450"){
-      target.probes = EpiMix_GetData("HM450_lncRNA_probes")
-    }else if (met.platform == "EPIC"){
-      target.probes = EpiMix_GetData("EPIC_lncRNA_probes")
-    }
-
-    overlapProbes = unique(target.probes[which(names(target.probes) %in% rownames(gene.expression.data))])
-    overlapProbes = intersect(overlapProbes, rownames(methylation.data))
+    ### Step 1: filter CpGs based on user-specified conditions
+    ProbeAnnotation <- filterProbes(mode = mode,
+                                    gene.expression.data = gene.expression.data,
+                                    listOfGenes = listOfGenes,
+                                    promoters = promoters,
+                                    met.platform = met.platform,
+                                    genome = genome)
+    overlapProbes = unique(intersect(ProbeAnnotation$probe, rownames(methylation.data)))
     methylation.data = methylation.data[overlapProbes,,drop = F]
 
-    ### Step 3: split methylation data into group.1 and group.2
+
+    ### Step 2: split methylation data into group.1 and group.2
     MET_Experiment <-  MET_Control <- NULL
     methylation.data <- split.met.data(methylation.data, sample.info, group.1, group.2)
     MET_Experiment <- methylation.data$MET_Experiment
@@ -447,57 +397,44 @@ EpiMix <- function(methylation.data,
     }
     cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated probes\n")
 
-    ### Step 5: identify transcriptionally predictive probes
-    cat("Selecting transcriptionally predicitve probes...\n")
-
-    # Combine the methylation states for the experiment group and the control group into one matrix
+    ### Step 5: select functional CpGs and calculate prevalence and fold change
     MET_matrix <- MethylMixResults$MethylationStates
-    MET_matrix_control <- matrix(0, nrow(MET_matrix), ncol(MET_Control))
-    colnames(MET_matrix_control) <- colnames(MET_Control)
-    MET_matrix <- cbind(MET_matrix, MET_matrix_control)
-    MET_matrix <- filterMethMatrix(MET_matrix, gene.expression.data)
-
-    if(nrow(MET_matrix) > 0 & ncol(MET_matrix) > 0){
-      ProbeNames = rownames(MET_matrix)
-      methylation.states = getMethStates(MethylMixResults, ProbeNames)
-
-      GeneProbeMap = ProbeAnnotation[ProbeAnnotation$probeID %in% ProbeNames,c("gene", "probeID"),drop = F]
-      GeneProbeMap = GeneProbeMap[GeneProbeMap$gene %in% rownames(gene.expression.data), , drop = F]
-      colnames(GeneProbeMap) = c("Gene", "Probe")
-
-      uniqueGenes = unique(GeneProbeMap$Gene)
-      iterations = length(uniqueGenes)
-      pb <- utils :: txtProgressBar(max = iterations, style = 3)
-
-      FunctionalPairs = data.frame()
-      if(cores == "" | cores == 1){
-        for(i in 1:iterations){
-          gene = uniqueGenes[i]
-          probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
-          pairs = getFunctionalProbes(gene, probes, MET_matrix, MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-          FunctionalPairs = rbind(FunctionalPairs, pairs)
-          utils :: setTxtProgressBar(pb,i)
-        }
-      }
-      else{
-        progress <- function(n) utils :: setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-        FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
-          gene = uniqueGenes[i]
-          probes = GeneProbeMap$Probe[which(GeneProbeMap$Gene == gene)]
-          getFunctionalProbes(gene, probes, MET_matrix, MET_Control, gene.expression.data, methylation.states, raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-        }
-      }
-      close(pb)
-      rownames(FunctionalPairs) = c()
-      MethylMixResults$FunctionalPairs = FunctionalPairs
-    } else{
-      cat("Not enough differentially methylated genes, can not identify functional probe-gene pairs, returning EpiMix results...\n")
+    prev.data <- get.prevalence(MethylMixResults)
+    if(is.null(gene.expression.data)){
+      # No gene expression data, just report the gene names and prevalence
+      prev.data <- addGeneNames(prev.data, ProbeAnnotation)
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Gene, .data$Probe, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
     }
+
+    ### Step 6: identify transcriptionally predictive probes
+    cat("Identifying functional CpG-gene pairs...\n")
+    FunctionalPairs <- generateFunctionalPairs(MET_matrix,
+                                               MET_Control,
+                                               gene.expression.data,
+                                               ProbeAnnotation,
+                                               raw.pvalue.threshold,
+                                               adjusted.pvalue.threshold,
+                                               cores)
+    if(is.null(FunctionalPairs)){
+      cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
+      prev.data <- addGeneNames(prev.data, ProbeAnnotation)
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Probe, .data$Gene, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
+    }
+
+    # Add in the prevalence information
+    FunctionalPairs <- merge(x = prev.data, y = FunctionalPairs, by = "Probe")
+    col.order <- c("Gene", "Probe", "State", "Prevalence of hypo (%)", "Prevalence of hyper (%)", "Fold change of gene expression",
+                   "Comparators", "Raw.p", "Adjusted.p")
+    FunctionalPairs <- FunctionalPairs[, col.order]
+    FunctionalPairs <- FunctionalPairs[order(FunctionalPairs$Gene), ]
+    rownames(FunctionalPairs) = c()
+    MethylMixResults$FunctionalPairs = FunctionalPairs
   }
 
   #--------------------------------------------Enhancer Mode--------------------------------------------------------------------------------------------
-  if(mode == "enhancer"){
+  if(mode == "Enhancer"){
     cat("Running", mode, "mode...\n")
     ### Step 1: filter enhancer probes
     cat("Fetching probe annotation...\n")
@@ -520,100 +457,107 @@ EpiMix <- function(methylation.data,
     if(!is.null(MixtureModelResults)){
       MethylMixResults = readRDS(MixtureModelResults)
     }else{
-      cat("Fetching enhancer probes from Roadmap Epigenomics...\n")
-      enhancer.probes = NULL
+      cat("Fetching enhancer CpGs from Roadmap Epigenomics...\n")
       RoadMap.enhancer.probes <- getRoadMapEnhancerProbes(met.platform = met.platform,
                                                           genome = genome,
                                                           functional.regions = chromatin.states,
                                                           listOfEpigenomes = selectedEpigenomes,
                                                           ProbeAnnotation = ProbeAnnotation)
-
+      # distal enhancer probes = intersect(distal probes, enhancer probes)
       distal.probes <- names(get.feature.probe(met.platform = met.platform, genome = genome))
       enhancer.probes = intersect(distal.probes, RoadMap.enhancer.probes$probeID)
       presentEnhancerProbes = intersect(rownames(MET_Experiment), enhancer.probes)
-      cat("Found", length(presentEnhancerProbes), "enhancer probes in the methylation dataset\n")
+      cat("Found", length(presentEnhancerProbes), "CpGs associated with distal enhancers in the methylation dataset\n")
       MET_Experiment <- MET_Experiment[presentEnhancerProbes, ,drop = F]
       MET_Control <- MET_Control[presentEnhancerProbes, ,drop = F]
 
       FunctionalGenes = rownames(MET_Experiment)
       MethylMixResults <- MethylMix_MixtureModel(MET_Experiment, MET_Control, FunctionalGenes, NoNormalMode = FALSE)
-      if (OutputRoot != "") { # Save the intermediate results for test purpose
+      if (OutputRoot != "") { # Save the intermediate MethylMix results
         saveRDS(MethylMixResults, file = paste0(OutputRoot, "/", "EpiMix_Results_",mode,".rds"))
       }
     }
-    cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated probes\n")
+    cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated CpGs\n")
+
+    # Calculate the prevalence for differential DNAme
+    MET_matrix <- MethylMixResults$MethylationStates
+    prev.data <- get.prevalence(MethylMixResults)
+    if(is.null(gene.expression.data)){
+      # No gene expression data, just report the gene names and prevalence
+      prev.data['Gene'] <- ProbeAnnotation$gene_HGNC[which(names(ProbeAnnotation) %in% rownames(MET_matrix))]
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Gene, .data$Probe, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
+    }
 
     ### Step 4:  modeling the gene expression and select the functional enhancer probes
-    cat("Modeling gene expression for enhancers...\n")
-    # Combine the methylation states for the experiment group and the control group into one matrix
-    MET_matrix <- MethylMixResults$MethylationStates
-    MET_matrix_control <- matrix(0, nrow(MET_matrix), ncol(MET_Control))
-    colnames(MET_matrix_control) <- colnames(MET_Control)
-    MET_matrix <- cbind(MET_matrix, MET_matrix_control)
-    MET_matrix_filtered <- filterMethMatrix(MET_matrix, gene.expression.data)
+    cat("Modeling the gene expression for enhancers...\n")
+    MET_matrix<- filterMethMatrix(MET_matrix = MET_matrix, MET_Control = MET_Control, gene.expression.data = gene.expression.data)
 
-    if(nrow(MET_matrix_filtered) > 0 & ncol( MET_matrix_filtered) > 0){
-      # get nearby genes for the differentially methylated CpG probes
-      DM.probes = rownames(MET_matrix_filtered)
-      geneAnnot <- getTSS(genome = genome) #ELMER function to retrieve a GRange object that contains coordinates of promoters for human genome.
-      DM.probes.annotation = ProbeAnnotation[which(names(ProbeAnnotation) %in% DM.probes), ,drop = F]
-      NearbyGenes <- GetNearGenes(geneAnnot = geneAnnot,
-                                  TRange = DM.probes.annotation,
-                                  numFlankingGenes = numFlankingGenes)
-
-      # start to modeling gene expression
-      iterations = length(DM.probes)
-      methylation.states = getMethStates(MethylMixResults, DM.probes)
-      pb <- utils :: txtProgressBar(max = iterations, style = 3)
-
-      FunctionalPairs = data.frame()
-      if(cores == "" | cores == 1){
-        for(i in 1:iterations){
-          target.probe = DM.probes[i]
-          state = methylation.states[target.probe]
-          target.genes =  NearbyGenes$Symbol[which(NearbyGenes$ID == target.probe)]
-          target.genes = intersect(target.genes, rownames(gene.expression.data))
-          if (length(target.genes)==0) next()
-          pairs = getFunctionalGenes(target.probe,
-                                     state,
-                                     target.genes,
-                                     MET_matrix,
-                                     MET_Control,
-                                     gene.expression.data,
-                                     ProbeAnnotation,
-                                     raw.pvalue.threshold = raw.pvalue.threshold,
-                                     adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-          FunctionalPairs = rbind(FunctionalPairs, pairs)
-          utils :: setTxtProgressBar(pb,i)
-        }
-      }
-      else{
-        progress <- function(n) utils :: setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-        FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
-          target.probe = DM.probes[i]
-          state = methylation.states[target.probe]
-          target.genes =  NearbyGenes$Symbol[which(NearbyGenes$ID == target.probe)]
-          target.genes = intersect(target.genes, rownames(gene.expression.data))
-          if(length(target.genes)>0) {
-            getFunctionalGenes(target.probe,
-                               state,
-                               target.genes,
-                               MET_matrix,
-                               MET_Control,
-                               gene.expression.data,
-                               ProbeAnnotation,
-                               raw.pvalue.threshold = raw.pvalue.threshold,
-                               adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-          }
-        }
-      }
-      close(pb)
-      rownames(FunctionalPairs) = c()
-      MethylMixResults$FunctionalPairs = FunctionalPairs
-    } else {
-      cat("Not enough differentially methylated genes, can not identify functional probe-gene pairs, returning EpiMix results...\n")
+    if(length(MET_matrix) == 0){
+      cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
+      prev.data['Gene'] <-  ProbeAnnotation$gene_HGNC[which(names(ProbeAnnotation) %in% rownames(MET_matrix))]
+      MethylMixResults$FunctionalPairs = prev.data %>% dplyr :: select(.data$Probe, .data$Gene, .data$'Prevalence of hypo (%)', data$'Prevalence of hyper (%)')
+      return(MethylMixResults)
     }
+
+    # Get nearby genes for the differentially methylated CpGs
+    DM.probes = rownames(MET_matrix)
+    geneAnnot <- getTSS(genome = genome) #ELMER function to retrieve a GRange object that contains coordinates of promoters for human genome.
+    DM.probes.annotation = ProbeAnnotation[which(names(ProbeAnnotation) %in% DM.probes), ,drop = F]
+    NearbyGenes <- GetNearGenes(geneAnnot = geneAnnot,
+                                TRange = DM.probes.annotation,
+                                numFlankingGenes = numFlankingGenes)
+
+    # Find functional CpGs
+
+    cat("Looking for differentially methylated enhancers associated with gene expression\n")
+    iterations = length(DM.probes)
+    pb <- utils :: txtProgressBar(max = iterations, style = 3)
+
+    FunctionalPairs = data.frame()
+    if(cores == "" | cores == 1){
+      for(i in 1:iterations){
+        target.probe = DM.probes[i]
+        target.genes =  intersect(NearbyGenes$Symbol[which(NearbyGenes$ID == target.probe)],rownames(gene.expression.data))
+        if (length(target.genes)==0) next()
+        pairs = getFunctionalGenes(target.probe = target.probe,
+                                   target.genes = target.genes,
+                                   MET_matrix = MET_matrix,
+                                   gene.expression.data = gene.expression.data,
+                                   ProbeAnnotation = ProbeAnnotation,
+                                   raw.pvalue.threshold = raw.pvalue.threshold,
+                                   adjusted.pvalue.threshold = adjusted.pvalue.threshold)
+        FunctionalPairs = rbind(FunctionalPairs, pairs)
+        utils :: setTxtProgressBar(pb,i)
+      }
+    }
+    else{
+      progress <- function(n) utils :: setTxtProgressBar(pb, n)
+      opts <- list(progress = progress)
+      FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
+        target.probe = DM.probes[i]
+        target.genes =  NearbyGenes$Symbol[which(NearbyGenes$ID == target.probe)]
+        target.genes = intersect(target.genes, rownames(gene.expression.data))
+        if(length(target.genes)>0) {
+          getFunctionalGenes(target.probe = target.probe,
+                             target.genes = target.genes,
+                             MET_matrix = MET_matrix,
+                             gene.expression.data = gene.expression.data,
+                             ProbeAnnotation = ProbeAnnotation,
+                             raw.pvalue.threshold = raw.pvalue.threshold,
+                             adjusted.pvalue.threshold = adjusted.pvalue.threshold)
+        }
+      }
+    }
+    close(pb)
+    # Add in the prevalence information
+    FunctionalPairs <- merge(x = prev.data, y = FunctionalPairs, by = "Probe")
+    rownames(FunctionalPairs) = c()
+    col.order <- c("Gene", "Probe", "State", "Prevalence of hypo (%)", "Prevalence of hyper (%)", "Fold change of gene expression",
+                   "Comparators", "Raw.p", "Adjusted.p")
+    FunctionalPairs <- FunctionalPairs[, col.order]
+    FunctionalPairs <- FunctionalPairs[order(FunctionalPairs$Gene), ]
+    MethylMixResults$FunctionalPairs = FunctionalPairs
   }
 
   if(!is.null(MethylMixResults$FunctionalPairs)){

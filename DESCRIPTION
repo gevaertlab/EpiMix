@@ -27,6 +27,8 @@ Imports:
   GenomicRanges,
   GEOquery,
   ggplot2,
+  graphics, 
+  grDevices,
   impute,
   IRanges,
   limma,
@@ -40,9 +42,11 @@ Imports:
   rlang,
   RPMM,
   S4Vectors,
+  stats,
   SummarizedExperiment,
   tibble,
-  tidyr
+  tidyr,
+  utils
 Suggests:
   BiocStyle,
   clusterProfiler,
@@ -54,6 +58,6 @@ Suggests:
   survival,
   survminer,
   TxDb.Hsapiens.UCSC.hg19.knownGene
-biocViews: DNAMethylation, DifferentialMethylation, MethylationArray,  GeneExpression, Transcription, FunctionalAnnotation, Pathways, Survival, Preprocessing, Visualization
+biocViews: DNAMethylation, DifferentialMethylation, MethylationArray,  GeneExpression, Transcription, FunctionalAnnotation, Pathways, Survival, Preprocessing, Visualization, ExperimentData
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr

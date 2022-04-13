@@ -4,21 +4,16 @@
 \alias{get.prevalence}
 \title{The get.prevalence function}
 \usage{
-get.prevalence(target.probe, MET_matrix, MET_control, state)
+get.prevalence(MethylMixResults)
 }
 \arguments{
-\item{target.probe}{target CpG site.}
-
-\item{MET_matrix}{combined methylation state matrix for both case and control groups.}
-
-\item{MET_control}{methylation state matrix only for the control group.}
-
-\item{state}{methylation state for the target CpG, can be "Hyper", "Hypo" or "Dual".}
+\item{MET_matrix}{matrix of methylation states}
 }
 \value{
 a list of prevalence for the abnormal methylation
 }
 \description{
-Helper function to get the prevalence of the differential methylation of a CpG site in the study population.
+Helper function to get the methylation state and the
+prevalence of the differential methylation of a CpG sites in the study population.
 }
 \keyword{internal}

@@ -8,9 +8,8 @@ getFunctionalProbes(
   gene,
   probes,
   MET_matrix,
-  MET_Control,
-  exp,
-  methylation.states,
+  gene.expression.data,
+  correlation = "negative",
   raw.pvalue.threshold = 0.05,
   adjusted.pvalue.threshold = 0.01
 )
@@ -22,11 +21,9 @@ getFunctionalProbes(
 
 \item{MET_matrix}{methylation data matrix for CpGs from group.1 and group.2.}
 
-\item{MET_Control}{methylation data matrix for CpGs from group.2.}
+\item{gene.expression.data}{gene expression data matrix.}
 
-\item{exp}{gene expression data matrix.}
-
-\item{methylation.states}{character vector indicating the methylation states of the target probes}
+\item{correlation}{character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".}
 
 \item{raw.pvalue.threshold}{raw p value from testing DNA methylation and gene expression}
 

@@ -103,7 +103,7 @@ split.met.data <- function(methylation.data, sample.info, group.1, group.2){
 #' @keywords internal
 #'
 mapProbeGene <- function(df.annot){
-  df.annot <- df.annot[!is.na(df.annot$probeID) & !is.na(df.annot$gene), ]
+  df.annot <- df.annot[!is.na(df.annot$gene), ]
   df.annot <- tidyr :: separate_rows(df.annot, .data$gene, sep = ";")
   df.annot <- dplyr :: distinct(df.annot)
   return(df.annot)
@@ -124,18 +124,27 @@ getMethStates <- function(MethylMixResults, DM.probes){
   for(probe in DM.probes){
     state = NULL
     DMValues = mixture.states[[probe]]
-    # after applying filter 1 in the main code, we only have probes with two states now (normal-hyper, normal-hypo or hypo-hyper)
-    if(max(DMValues) > 0 & min(DMValues) < 0){
-      state = "Dual"
-    }else if(max(DMValues) > 0){
-      state = "Hyper"
-    }else{
-      state = "Hypo"
-    }
+    state = getMethStates_Helper(DMValues = DMValues)
     meth.states = append(meth.states, state)
   }
   names(meth.states) = DM.probes
   return(meth.states)
+}
+
+#' The getMethStates_Helper function
+#' @description helper function to determine the methylation state based on DM values
+#' @param DMValues a character vector indicating the DM values of a CpG site
+#' @return a character string incdicating the methylation state of the CpG
+#'
+getMethStates_Helper <- function(DMValues){
+  if(max(DMValues) > 0 & min(DMValues) < 0){
+    state = "Dual"
+  }else if(max(DMValues) > 0){
+    state = "Hyper"
+  }else{
+    state = "Hypo"
+  }
+  return(state)
 }
 
 #' The getFunctionalProbes function
@@ -144,9 +153,8 @@ getMethStates <- function(MethylMixResults, DM.probes){
 #' @param gene character string indicating the target gene to be modeled.
 #' @param probes character vector indicating the probes mapped to the target gene.
 #' @param MET_matrix methylation data matrix for CpGs from group.1 and group.2.
-#' @param MET_Control methylation data matrix for CpGs from group.2.
-#' @param exp gene expression data matrix.
-#' @param methylation.states character vector indicating the methylation states of the target probes
+#' @param gene.expression.data gene expression data matrix.
+#' @param correlation character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".
 #' @param raw.pvalue.threshold raw p value from testing DNA methylation and gene expression
 #' @param adjusted.pvalue.threshold adjusted p value from testing DNA methylation and gene expression
 #' @keywords internal
@@ -156,61 +164,64 @@ getMethStates <- function(MethylMixResults, DM.probes){
 getFunctionalProbes <- function(gene,
                                 probes,
                                 MET_matrix,
-                                MET_Control,
-                                exp,
-                                methylation.states,
+                                gene.expression.data,
+                                correlation = "negative",
                                 raw.pvalue.threshold = 0.05,
                                 adjusted.pvalue.threshold = 0.01){
-  sample.number = ncol(MET_matrix)
-  if(!is.null(MET_Control)){
-    sample.number = ncol(MET_matrix) - length(intersect(colnames(MET_matrix), colnames(MET_Control)))
-  }
-  p = c()
+
   mRNA.fold.change = c()
   comparisons = c()
-  hypo_prev = c()
-  hyper_prev = c()
-  states = c()
+  p = c()
+
   for(probe in probes){
-    prev.hypo <- prev.hyper <-  state <- NULL
-    state = methylation.states[probe]
+    state <- fold_change <- cmp <- p_value <- NULL
     DM_values = MET_matrix[probe, ] # a single-row vector with the names as sample names, and the values as DM values
-    high.met.samples = names(DM_values[DM_values == max(DM_values)])
-    low.met.samples = names(DM_values[DM_values == min(DM_values)])
-    expr.low.values = as.numeric(exp[gene,high.met.samples])  # high methylation, low gene expression
-    expr.high.values = as.numeric(exp[gene,low.met.samples])  # low methylation, high gene expression
-    p_value = wilcox.test(expr.high.values, expr.low.values, alternative = "greater")$p.value
+    state = getMethStates_Helper(DM_values)
     if(state == "Hyper") {
-      prev.hypo = 0
-      prev.hyper = round(length(high.met.samples) / sample.number * 100, 3)
+      high.met.samples = names(DM_values[DM_values > 0])
+      low.met.samples = names(DM_values[DM_values == 0])
+      expr.low.values = as.numeric(gene.expression.data[gene,high.met.samples])  # high methylation, low gene expression
+      expr.high.values = as.numeric(gene.expression.data[gene,low.met.samples])  # low methylation, high gene expression
       fold_change = round(mean(expr.low.values) / mean(expr.high.values),3)
       cmp = "hyper vs normal"
+      p_value = wilcox.test(expr.high.values,
+                            expr.low.values,
+                            alternative = ifelse(correlation == "negative","greater","less"),
+                            exact = FALSE)$p.value
+
     }else if(state == "Dual") {
-      prev.hypo = round(length(low.met.samples) / sample.number * 100, 3)
-      prev.hyper = round(length(high.met.samples) / sample.number * 100, 3)
+      high.met.samples = names(DM_values[DM_values > 0])
+      low.met.samples = names(DM_values[DM_values < 0])
+      expr.low.values = as.numeric(gene.expression.data[gene,high.met.samples])  # high methylation, low gene expression
+      expr.high.values = as.numeric(gene.expression.data[gene,low.met.samples])  # low methylation, high gene expression
       fold_change = round(mean(expr.high.values) / mean(expr.low.values), 3)
       cmp = "hypo vs hyper"
+      p_value = wilcox.test(expr.high.values,
+                            expr.low.values,
+                            alternative = ifelse(correlation == "negative","greater","less"),
+                            exact = FALSE)$p.value
     }else{
-      prev.hypo = round(length(low.met.samples) / sample.number * 100, 3)
-      prev.hyper = 0
+      high.met.samples = names(DM_values[DM_values == 0])
+      low.met.samples = names(DM_values[DM_values < 0])
+      expr.low.values = as.numeric(gene.expression.data[gene,high.met.samples])  # high methylation, low gene expression
+      expr.high.values = as.numeric(gene.expression.data[gene,low.met.samples])  # low methylation, high gene expression
       fold_change = round(mean(expr.high.values) / mean(expr.low.values),3)
       cmp = "hypo vs normal"
+      p_value = wilcox.test(expr.high.values,
+                            expr.low.values,
+                            alternative = ifelse(correlation == "negative","greater","less"),
+                            exact = FALSE)$p.value
     }
-    states = append(states, state)
-    p = append(p, p_value)
-    hypo_prev= append(hypo_prev, prev.hypo)
-    hyper_prev= append(hyper_prev, prev.hyper)
-    comparisons = append(comparisons, cmp)
+
     mRNA.fold.change = append(mRNA.fold.change, fold_change)
+    comparisons = append(comparisons, cmp)
+    p = append(p, p_value)
   }
 
   # produce a dataframe for gene expression with methylation state and prevalence inforamtion
   dataDEGs <- data.frame(Gene = rep(gene,length(probes)),
-                         Probe = probes,
-                         State = states
+                         Probe = probes
   )
-  dataDEGs['Proportion of hypo (%)'] <- hypo_prev
-  dataDEGs['Proportion of hyper (%)'] <- hyper_prev
   dataDEGs['Fold change of gene expression'] <- mRNA.fold.change
   dataDEGs['Comparators'] <- comparisons
   dataDEGs['Raw.p'] <- p
@@ -227,7 +238,7 @@ getFunctionalProbes <- function(gene,
 #'
 #' @return A list each of which is the value of each row/column in the matrix.
 #'
-splitmatrix <- function(x,by="row") {
+splitmatrix <- function(x, by="row") {
   if(by %in% "row"){
     out <- split(x, rownames(x))
   }else if (by %in% "col"){
@@ -237,70 +248,50 @@ splitmatrix <- function(x,by="row") {
 }
 
 #' The get.prevalence function
-#' @description Helper function to get the prevalence of the differential methylation of a CpG site in the study population.
-#' @param target.probe target CpG site.
-#' @param MET_matrix combined methylation state matrix for both case and control groups.
-#' @param MET_control methylation state matrix only for the control group.
-#' @param state methylation state for the target CpG, can be "Hyper", "Hypo" or "Dual".
+#' @description Helper function to get the methylation state and the
+#' prevalence of the differential methylation of a CpG sites in the study population.
+#' @param MET_matrix matrix of methylation states
 #' @keywords internal
 #'
 #' @return a list of prevalence for the abnormal methylation
 #'
-get.prevalence <- function(target.probe, MET_matrix, MET_control, state){
-  if(!is.null(MET_control)){
-    control.samples <- colnames(MET_control)
-    exp.samples <- setdiff(colnames(MET_matrix), control.samples)
-  }else{
-    exp.samples <- colnames(MET_matrix)
-  }
-  MET_exp <- MET_matrix[,exp.samples, drop = F]
-  DM_values = MET_exp[target.probe, ]
-  high.met.samples = names(DM_values[DM_values == max(DM_values)])
-  low.met.samples = names(DM_values[DM_values == min(DM_values)])
-  sample.number = ncol(MET_exp)
-  if(state == "Hyper"){
-    hypo_prev = 0
-    hyper_prev = round(length(high.met.samples) / sample.number * 100, 3)
-  }else if(state == "Hypo"){
-    hypo_prev =  round(length(low.met.samples) / sample.number * 100, 3)
-    hyper_prev = 0
-  }else{
-    hypo_prev = round(length(low.met.samples) / sample.number * 100, 3)
-    hyper_prev = round(length(high.met.samples) / sample.number * 100, 3)
-  }
-  return(list(hypo = hypo_prev, hyper = hyper_prev))
+get.prevalence <- function(MethylMixResults){
+  MET_matrix <- MethylMixResults$MethylationStates
+  hypo_prev <- apply(MET_matrix, 1, function(x) round(length(x[x<0]) / length(x) * 100, 3))
+  hyper_prev <- apply(MET_matrix, 1, function(x) round(length(x[x>0]) / length(x) * 100, 3))
+  states <- getMethStates(MethylMixResults, rownames(MET_matrix))
+  prev.data <- data.frame(Probe = rownames(MET_matrix), State = states, row.names = NULL)
+  prev.data['Prevalence of hypo (%)'] = hypo_prev
+  prev.data['Prevalence of hyper (%)'] = hyper_prev
+  return(prev.data)
 }
 
-
 #' The model.gene.expression function
-#'
+#' @description obtain a dataframe with the fold change of gene expression and signifcant p values
 #' @param target.probe character string indicating the target CpG site.
 #' @param MET_matrix combined methylation state matrix for both case and control groups.
 #' @param gene.expression.data a matrix with gene expression data.
 #' @param target.genes character vector with the names of the genes associated with the target CpGs.
-#' @param state methylation state for the target CpG, can be "Hyper", "Hypo" or "Dual".
-#' @param correlation the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".
+#' @param correlation character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".
+#' @param calculate.fold.change logic indicating whether to calculate fold change between different mixtures
 #' @keywords internal
 #'
 #' @return a dataframe with fold change of gene expression and p values.
 #'
-model.gene.expression <- function(target.probe, MET_matrix, gene.expression.data, target.genes, state, correlation = "negative"){
+model.gene.expression <- function(target.probe,
+                                  MET_matrix,
+                                  gene.expression.data,
+                                  target.genes,
+                                  correlation = "negative",
+                                  calculate.fold.change = TRUE){
+
   DM_values = MET_matrix[target.probe, ]
+  state = getMethStates_Helper(DM_values)
   high.met.samples = which(DM_values == max(DM_values))
   low.met.samples = which(DM_values == min(DM_values))
   Exps = gene.expression.data[target.genes, ,drop = F]
   if(length(Exps) == 0) return(NULL)
-  fold.change <- unlist(lapply(splitmatrix(Exps),
-                          function(x) {
-                            if(state == "Hyper"){
-                              round(mean(x[high.met.samples])/mean(x[low.met.samples]), 3)
-                            }else if(state == "Dual"){
-                              round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
-                            }else{
-                              round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
-                            }
-                          }
-                       ))
+  # calculate raw p values
   test.p <- unlist(lapply(splitmatrix(Exps),
                           function(x) {
                             wilcox.test(x[low.met.samples],
@@ -310,9 +301,22 @@ model.gene.expression <- function(target.probe, MET_matrix, gene.expression.data
                           }
                    ))
   res <- data.frame(Gene = target.genes,
-                    fold_change = fold.change[match(target.genes, names(fold.change))],
-                    Raw.p = test.p[match(target.genes, names(test.p))],
+                    test.p = test.p[match(target.genes, names(test.p))],
                     stringsAsFactors = FALSE)
+  if(calculate.fold.change){
+    fold.change <- unlist(lapply(splitmatrix(Exps),
+                                 function(x) {
+                                   if(state == "Hyper"){
+                                     round(mean(x[high.met.samples])/mean(x[low.met.samples]), 3)
+                                   }else if(state == "Dual"){
+                                     round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
+                                   }else{
+                                     round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
+                                   }
+                                 }
+    ))
+  res$fold_change = fold.change[match(target.genes, names(fold.change))]
+  }
   return(res)
 }
 
@@ -334,52 +338,36 @@ get.chromosome <- function(genes, genome){
 }
 
 
-#' The get.perm.pVals function
-#' @description Helper function to perform permutation test for a target enhancer CpG. Used in the Enhancer mode.
+#' The get.random.genes function
+#' @description Helper function to get a set of random genes located on different chromosomes of the target CpG.
 #' @param target.probe character string indicating the target CpG for generating the permutation p values.
-#' @param MET_matrix a matrix of methylaiton states for the patients.
 #' @param gene.expression.data a matrix of gene expression data.
 #' @param ProbeAnnotation GRange object of probe annotation.
 #' @param genome character string indicating the genome build version, can be either "hg19" or "hg38".
-#' @param correlation the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".
-#' @param perm the number of permutation tests.
+#' @param perm the number of permutation tests. Default: 1000
 #' @keywords internal
 #'
 #' @return a dataframe for the permutation genes and p values for the target CpG site.
 #'
-get.perm.pVals <- function(target.probe,
-                           MET_matrix,
-                           gene.expression.data,
-                           ProbeAnnotation,
-                           genome = "hg38",
-                           correlation = "negative",
-                           perm = 1000){
+get.random.genes <- function(target.probe,
+                             gene.expression.data,
+                             ProbeAnnotation,
+                             genome = "hg38",
+                             perm = 1000){
 
+  # get the chromosome of the current CpG
   target.chr = as.character(seqnames(ProbeAnnotation)[which(names(ProbeAnnotation) == target.probe)])
+  # get the chromosomes of all the genes with gene expression data avaliable
   all.genes = rownames(gene.expression.data)
   gene.chr = get.chromosome(all.genes, genome)
+  # get the genes that are not on the same chromosome of the current CpG
   random.genes = gene.chr$Gene[which(!gene.chr$Chr %in% c(target.chr, "chrX", "chrY"))]
   if(length(unique(random.genes)) < perm){
-    warning("There is no gene expression data for enough genes to generate ", perm, " permutations, using ", length(unique(random.genes)), " random genes instead.", immediate. = TRUE)
+    warning("There is not enough genes to generate ", perm, " permutations. Using ", length(unique(random.genes)), " random genes instead.", immediate. = TRUE)
     perm = length(unique(random.genes))
   }
   random.genes = sample(gene.chr$Gene[which(!gene.chr$Chr %in% c(target.chr, "chrX", "chrY"))], perm)
-  Exps = gene.expression.data[random.genes, ]
-  DM_values = MET_matrix[target.probe, ] # a single-row vector with the names as sample names, and the values as DM values
-  high.met.samples = which(DM_values == max(DM_values))
-  low.met.samples = which(DM_values == min(DM_values))
-  test.p <- unlist(lapply(splitmatrix(Exps),
-                          function(x) {
-                            wilcox.test(x[low.met.samples],
-                                        x[high.met.samples],
-                                        alternative = ifelse(correlation == "negative","greater","less"),
-                                        exact = FALSE)$p.value
-                          }
-
-  ))
-  test.p <- data.frame(Genes=random.genes,
-                       Perm.p=test.p[match(random.genes, names(test.p))],
-                       stringsAsFactors = FALSE)
+  return(random.genes)
 }
 
 #' The get.comparators function
@@ -400,13 +388,11 @@ get.comparators <- function(state){
 }
 
 #' The getFunctionalGenes function
-#' @description  Helper function to assess if the methylation of a probe is reversely correlated with the expression of its nearby genes.
+#' @description Helper function to assess if the methylation of a probe is reversely correlated with the expression of its nearby genes.
 #' @details This function is probe-centered, which is used in the enhancer mode and the miRNA mode of EpiMix.
 #' @param target.probe character string indicating the probe to be evaluated.
-#' @param state character string indicating the methylation state of the probe, should be either "Hyper", "Hypo" or "Dual".
 #' @param target.genes character vector indicating the nearby genes of the target probe.
 #' @param MET_matrix methylation data matrix for CpGs from group.1 and group.2.
-#' @param MET_Control methylation data matrix for CpGs from group.2.
 #' @param gene.expression.data gene expression data matrix.
 #' @param ProbeAnnotation GRange object of CpG probe annotation.
 #' @param raw.pvalue.threshold raw p value from testing DNA methylation and gene expression
@@ -415,43 +401,42 @@ get.comparators <- function(state){
 #' @return dataframe with functional probe-gene pair and p values from the Wilcoxon test for methylation and gene expression.
 #'
 getFunctionalGenes <- function(target.probe,
-                               state,
                                target.genes,
                                MET_matrix,
-                               MET_Control,
                                gene.expression.data,
                                ProbeAnnotation,
                                raw.pvalue.threshold = 0.05,
                                adjusted.pvalue.threshold = 0.01){
-  target.genes = intersect(target.genes, rownames(gene.expression.data))
-  if(length(target.genes) == 0) return(NULL)
-  # calculate prevalence
-  prev = get.prevalence(target.probe, MET_matrix, MET_Control, state)
-  hypo_prev = prev$hypo
-  hyper_prev = prev$hyper
-  # modeling gene expression
-  MET_matrix <- filterMethMatrix(MET_matrix, gene.expression.data)
-  gene.expr <- model.gene.expression(target.probe, MET_matrix, gene.expression.data, target.genes, state)
-  if(is.null(gene.expr)) return(NULL)
-  # find the permutation p values of this probe
-  perm.pvals = get.perm.pVals(target.probe,
-                              MET_matrix,
-                              gene.expression.data,
-                              ProbeAnnotation,
-                              genome = "hg38",
-                              correlation = "negative")
+
+  # get fold changes and raw p values
+  raw.pvals <- model.gene.expression(target.probe = target.probe,
+                                     MET_matrix = MET_matrix,
+                                     gene.expression.data = gene.expression.data,
+                                     target.genes = target.genes,
+                                     correlation = "negative",
+                                     calculate.fold.change = TRUE)
+
+
+  if(is.null(raw.pvals)) return(NULL)
+  # get permutation p values
+  random.genes <- get.random.genes(target.probe = target.probe, gene.expression.data = gene.expression.data, ProbeAnnotation, genome = "hg38", perm = 1000)
+  perm.pvals = model.gene.expression(target.probe = target.probe,
+                                      MET_matrix = MET_matrix,
+                                      gene.expression.data = gene.expression.data,
+                                      target.genes = random.genes,
+                                      correlation = "negative",
+                                      calculate.fold.change = FALSE)
+
+  state = getMethStates_Helper(MET_matrix[target.probe,])
   cmp = get.comparators(state)
-  dataDEGs <- data.frame(Gene = gene.expr$Gene,
-                         Probe = rep(target.probe,length(gene.expr$Gene)),
-                         State = rep(state,length(gene.expr$Gene)),
-                         Prev_hypo = rep(hypo_prev, length(gene.expr$Gene)),
-                         Prev_hypo =  rep(hyper_prev, length(gene.expr$Gene)),
-                         fold_change = gene.expr$fold_change,
-                         Comparators = rep(cmp, length(gene.expr$Gene)),
-                         Raw.p = gene.expr$Raw.p)
+  dataDEGs <- data.frame(Gene = raw.pvals$Gene,
+                         Probe = rep(target.probe,length(raw.pvals$Gene)),
+                         fold_change = raw.pvals$fold_change,
+                         Comparators = rep(cmp, length(raw.pvals$Gene)),
+                         Raw.p = raw.pvals$test.p)
   dataDEGs = Get.Pvalue.p(dataDEGs, perm.pvals)
   dataDEGs = dataDEGs[which(dataDEGs$Raw.p<raw.pvalue.threshold & dataDEGs$Adjusted.p < adjusted.pvalue.threshold),]
-  colnames(dataDEGs) <- c("Gene", "Probe", "State", "Proportion of hypo (%)", "Proportion of hyper (%)", "Fold change of gene expression", "Comparators", "Raw.p", "Adjusted.p")
+  colnames(dataDEGs) <- c("Gene", "Probe","Fold change of gene expression", "Comparators", "Raw.p", "Adjusted.p")
   dataDEGs = dplyr :: distinct(dataDEGs)
   return(dataDEGs)
 }
@@ -473,7 +458,7 @@ Get.Pvalue.p <- function(U.matrix, permu){
       # Pp = pvalue probe (Raw.p)
       # Pr = pvalue random probe (permu matrix)
       # We have to consider that floating Point Numbers are Inaccurate
-      out <- (sum(permu$Perm.p - Raw.p < 10^-100, na.rm=TRUE) + 1) / (sum(!is.na(permu$Perm.p)) + 1)
+      out <- (sum(permu$test.p - Raw.p < 10^-100, na.rm=TRUE) + 1) / (sum(!is.na(permu$test.p)) + 1)
     }
     return(out)
   }
@@ -486,21 +471,23 @@ Get.Pvalue.p <- function(U.matrix, permu){
 #' The filterMethMatrix function
 #' @details This function filters methylation states from the beta mixture modeling for each probe. The filtered probes can be used to model gene expression by Wilcoxon test.
 #' @param MET_matrix a matrix of methylation states from the EpiMix results
+#' @param MET_Control a matrix of DNA methylation data for the control group
 #' @param gene.expression.data a matrix with gene expression data
 #' @keywords internal
 #' @return a matrix of methylation states for each differentially methylated probe with probes in rows and patient in columns.
 #'
-filterMethMatrix <- function(MET_matrix, gene.expression.data){
-  # Filter 1: excluding probes that present only 1 methylation state, in which case we can not compare the gene expression for one methylation component versus another
-  METcounts <- apply(MET_matrix, 1, function(x)length(unique(x)))
-  MET_matrix <- MET_matrix[METcounts!=1,,drop = FALSE]
+filterMethMatrix <- function(MET_matrix, MET_Control, gene.expression.data){
+  # Combine the methylation states for the experiment group and the control group into one matrix
+  MET_matrix_control <- matrix(0, nrow(MET_matrix), ncol(MET_Control))
+  colnames(MET_matrix_control) <- colnames(MET_Control)
+  MET_matrix <- cbind(MET_matrix, MET_matrix_control)
 
-  # Filter 2: filter on samples which have gene expression data available
+  # Filter 1: filter on samples which have gene expression data available
   if(nrow(MET_matrix) > 0){
     common.samps <- intersect(colnames(MET_matrix),colnames(gene.expression.data))
-    MET_matrix <- MET_matrix[,common.samps]
+    MET_matrix <- MET_matrix[,common.samps, drop = FALSE]
   }
-  # Filter 3: filtering out probes with the minority group having sample number < 3. Otherwise, the Wilcoxon test won't work.
+  # Filter 2: filtering out probes with the minority group having sample number < 3. Otherwise, the Wilcoxon test won't work.
   if(ncol(MET_matrix) > 0){
     METminCounts <- apply(MET_matrix, 1, function(x)min(as.numeric(table(x))))
     MET_matrix <- MET_matrix[METminCounts>=3,]
@@ -532,7 +519,7 @@ EpiMix_ModelGeneExpression <- function(methylation.data, gene.expression.data, P
 
   # select the probes for those genes with the gene expression data available
   ProbeAnnotation = ProbeAnnotation[which(ProbeAnnotation$gene %in% rownames(gene.expression.data)), ]
-  OverlapProbes = intersect(rownames(methylation.data), ProbeAnnotation$probeID)
+  OverlapProbes = intersect(rownames(methylation.data), ProbeAnnotation$probe)
   methylation.data = methylation.data[OverlapProbes, , drop = FALSE]
 
   uniqueProbes = rownames(methylation.data)
@@ -547,7 +534,7 @@ EpiMix_ModelGeneExpression <- function(methylation.data, gene.expression.data, P
 
     if(cores == "" | cores == 1){
       for (i in 1:iterations){
-        tmpGenes = ProbeAnnotation$gene[which(ProbeAnnotation$probeID == uniqueProbes[i])]
+        tmpGenes = ProbeAnnotation$gene[which(ProbeAnnotation$probe == uniqueProbes[i])]
         for(gene in tmpGenes){
           res = lm(gene.expression.data[gene, ] ~ methylation.data[uniqueProbes[i], ])
           res.summary = summary(res)
@@ -565,7 +552,7 @@ EpiMix_ModelGeneExpression <- function(methylation.data, gene.expression.data, P
       i <- NULL # to avoid "no visible binding for global variable" in R CMD check
       FunctionalProbes = foreach::foreach(i = 1 : length(uniqueProbes), .combine = 'c', .options.snow= opts) %dopar% {
         probe = NULL
-        tmpGenes = ProbeAnnotation$gene[which(ProbeAnnotation$probeID == uniqueProbes[i])]
+        tmpGenes = ProbeAnnotation$gene[which(ProbeAnnotation$probe == uniqueProbes[i])]
         for(gene in tmpGenes){
           res = lm(gene.expression.data[gene, ] ~ methylation.data[uniqueProbes[i], ])
           res.summary = summary(res)
@@ -714,268 +701,6 @@ mapTranscriptToGene <- function(transcripts){
   df.miRNA.mapping$Gene_name = gene_name
   df.miRNA.mapping = df.miRNA.mapping[!is.na(df.miRNA.mapping$Gene_name), , drop = F]
   return(df.miRNA.mapping)
-}
-
-
-#' The get.survival.probe function
-#' @description Get probes whose methylation state is predictive of patient survival
-#' @param EpiMixResults List of objects returned from the EpiMix function
-#' @param TCGA_CancerSite String indicating the TCGA cancer code (e.g. "LUAD")
-#' @param clinical.data (If the TCGA_CancerSite is specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: "sample.id", "days_to_death", "days_to_last_follow_up".
-#' @param raw.pval.threshold numeric value indicting the raw p value threshold for selecting the survival predictive probes. Survival time is compared by log-rank test. Default: 0.05
-#' @param p.adjust.method character string indicating the statistical method for adjusting multiple comparisons, can be either of "holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none". Default: "fdr"
-#' @param adjusted.pval.threshold numeric value indicting the adjusted p value threshold for selecting the survival predictive probes. Default: 0.05
-#' @param OutputRoot path to save the output. If not null, the return value will be saved as "Survival)Probes.csv".
-#' @return a dataframe with probes whose methylation state is predictive of patient survival and the p value.
-#' @export
-#' @examples
-#' \dontrun{
-#' library(survival)
-#'
-#' data("Sample_EpiMixResults_miRNA")
-#'
-#' # Set the TCGA cancer site.
-#' CancerSite = "LUAD"
-#'
-#' # Find survival-associated CpGs/genes
-#' survival.CpGs <- get.survival.probe (EpiMixResults = Sample_EpiMixResults_miRNA,
-#'                                      TCGA_CancerSite = CancerSite)
-#' }
-#'
-
-get.survival.probe <- function(EpiMixResults,
-                               TCGA_CancerSite = NULL,
-                               clinical.data = NULL,
-                               raw.pval.threshold = 0.05,
-                               p.adjust.method = "none",
-                               adjusted.pval.threshold = 0.05,
-                               OutputRoot = ""){
-
-  if(!requireNamespace("survival")){
-    message("This function requires the 'survival' package.")
-    return(invisible())
-  }
-
-  if(is.null(TCGA_CancerSite) & is.null(clinical.data)){
-    stop("Please provide the value for either TCGA_CancerSite or clinical.data")
-  }
-
-  FunctionalPairs = EpiMixResults$FunctionalPairs
-
-  # Group the genes associated with the same CpG together
-  ProbeAnnotation =  FunctionalPairs %>%
-                     dplyr :: group_by(.data$Probe) %>%
-                     dplyr :: mutate(Genes = paste(.data$Gene, collapse = ";")) %>%
-                     dplyr :: select(.data$Probe, .data$Genes)
-
-  # Download clinical data
-  if(!is.null(TCGA_CancerSite)){
-    cat(paste0("Downloading patient clinical data for ", TCGA_CancerSite, "\n"))
-    clinical.data.directory = get_firehoseData(TCGA_acronym_uppercase = TCGA_CancerSite,
-                                               saveDir = tempdir(),
-                                               dataFileTag = "Merge_Clinical.Level_1",
-                                               )
-    clinical.data = data.table::fread(paste0(clinical.data.directory,TCGA_CancerSite,".merged_only_clinical_clin_format.txt"))
-    clinical.data=as.matrix(clinical.data)
-    rownames(clinical.data)=clinical.data[,1]
-    clinical.data = clinical.data[,-1]
-    clinical.data = clinical.data[-1,]
-    survival.info = data.frame(sample.id = toupper(clinical.data["patient.bcr_patient_barcode", ]),
-                               days_to_death = as.numeric(clinical.data["patient.days_to_death", ]),
-                               days_to_last_follow_up = as.numeric(clinical.data["patient.days_to_last_followup", ]))
-  }else{
-    survival.info = clinical.data
-  }
-
-  # Construct a dataframe for survival information. Status: 1 = censored, 2 = dead
-  survival.info <- survival.info %>%
-    dplyr :: mutate(
-                    time =  dplyr :: if_else(is.na(.data$days_to_death), .data$days_to_last_follow_up, .data$days_to_death),
-                    status =  dplyr :: if_else(is.na(.data$days_to_death), 1, 2)
-                    )
-  survival.info <- survival.info[!is.na(survival.info$time), ]
-  survival.info <- survival.info[survival.info$time != 0, ]
-
-  # Survival analysis
-  meth.state <- getMethStates(EpiMixResults, EpiMixResults$MethylationDrivers)
-  DMvalues <- EpiMixResults$MethylationStates
-  DMvalues <-TCGA_GENERIC_CleanUpSampleNames(DMvalues, 12)
-
-  cat("Finding survival-associated CpGs\n")
-  target.probes <- rownames(DMvalues)
-  iterations <- length(target.probes)
-  Probe <- State <- pval <- hazard.ratio <- low.conf <- high.conf <- character(0)
-  for(i in seq(1:iterations)){
-    target.probe <- state <- meth.values <- abnormal <- normal <- mixture.group <- target.survival <- sdf <- P.value <- sde <- HR <- low.cl <- high.cl <-  NULL
-    target.probe <- target.probes[i]
-    state <- meth.state[target.probe]
-    DM.value <- DMvalues[target.probe,]
-    if(state == "Hypo"){
-      abnormal <- names(DM.value)[which(DM.value < 0)]
-      normal <-  names(DM.value)[which(DM.value == 0)]
-    }else if(state == "Hyper"){
-      abnormal <- names(DM.value)[which(DM.value > 0)]
-      normal <-  names(DM.value)[which(DM.value == 0)]
-    }else{
-      abnormal <- names(DM.value)[which(DM.value < 0)]
-      normal <-  names(DM.value)[which(DM.value > 0)]
-    }
-
-    if(length(abnormal) < 10 | length(normal) < 10){
-      next()
-    }
-    normal <- data.frame(sample.id = normal, State = 1)
-    abnormal <- data.frame(sample.id = abnormal, State = 2)
-    mixture.group <- rbind(normal, abnormal)
-    target.survival <-merge(survival.info, mixture.group)
-    sdf <- survival :: survdiff(Surv(time, status) ~ State, data = target.survival)
-    P.value <- 1 - stats :: pchisq(sdf$chisq, length(sdf$n) - 1)
-    sde <- survival :: coxph(Surv(time, status) ~ State, data = target.survival)
-    HR <- stats :: coef(summary(sde))[, 2]
-    low.cl <- exp(stats :: confint(sde))[,1]
-    high.cl <- exp(stats :: confint(sde))[,2]
-    Probe <- c(Probe, target.probe)
-    State <- c(State, state)
-    pval <- c(pval, P.value)
-    hazard.ratio <- c(hazard.ratio, HR)
-    low.conf <- c(low.conf, low.cl)
-    high.conf <- c(high.conf, high.cl)
-  }
-
-  adjusted.pval <- p.adjust(pval, method = p.adjust.method)
-  survival.results <- data.frame(Probe = Probe,
-                                 State = State,
-                                 HR = hazard.ratio,
-                                 lower.Cl = low.conf,
-                                 higher.Cl = high.conf,
-                                 p.value = pval,
-                                 adjusted.p.value = adjusted.pval)
-
-  # Add annotation to CpGs
-  survival.results <- merge(survival.results, ProbeAnnotation)
-  survival.results <- survival.results %>%
-                      dplyr :: select(.data$Probe, .data$Genes, .data$State, .data$HR, .data$lower.Cl, .data$higher.Cl, .data$p.value, .data$adjusted.p.value) %>%
-                      dplyr :: distinct() %>%
-                      dplyr :: filter(.data$p.value < raw.pval.threshold) %>%
-                      dplyr :: filter(.data$adjusted.p.value < adjusted.pval.threshold) %>%
-                      dplyr :: arrange(.data$adjusted.p.value, .data$Genes, .data$HR, decreasing = TRUE)
-  rownames(survival.results) = NULL
-  cat("Found", nrow(survival.results), "survival predictive CpGs\n")
-
-  if(OutputRoot!="" & length(survival.results) > 0){
-    cat(paste0("Saving the result to ", OutputRoot, "/", "Survival_CpGs.csv"))
-    utils :: write.csv(survival.results, paste0(OutputRoot, "/", "Survival_CpGs.csv"), row.names = FALSE)
-  }
-  return(survival.results)
-}
-
-#' EpiMix_PlotSurvival function
-#' @description function to plot Kaplan-meier survival curves for patients with different methylation state of a specific probe.
-#' @param EpiMixResults List of objects returned from the EpiMix function
-#' @param plot.probe Character string with the name of the probe
-#' @param TCGA_CancerSite TCGA cancer code (e.g. "LUAD")
-#' @param clinical.df (If the TCGA_CancerSite parameter has been specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: "sample.id", "days_to_death", "days_to_last_follow_up".
-#' @param font.legend numeric value indicating the font size of the figure legend. Default: 16
-#' @param font.x numeric value indicating the font size of the x axis label. Default: 16
-#' @param font.y numeric value indicating the font size of the y axis label. Default: 16
-#' @param font.tickslab numeric value indicating the font size of the axis tick label. Default: 14
-#' @param legend numeric vector indicating the x,y coordinate for positioning the figure legend. c(0,0) indicates bottom left, while c(1,1) indicates top right. Default: c(0.8,0.9). If "none", legend will be removed.
-#' @param show.p.value logic indicating whether to show p value in the plot. P value was calculated by log-rank test.  Default: TRUE.
-#'
-#' @return Kaplan-meier survival curve showing the survival time for patients with different methylation states of the probe.
-#' @export
-#' @examples
-#' \dontrun{
-#' library(survival)
-#' library(survminer)
-#'
-#' # Select the target CpG site whose methylation states will be evaluated
-#' Probe = "cg00909706"
-#'
-#' # Generate the graph
-#' EpiMix_PlotSurvival(EpiMixResults = Sample_EpiMixResults_miRNA,
-#'                     plot.probe = Probe,
-#'                     TCGA_CancerSite = CancerSite)
-#' }
-#'
-
-EpiMix_PlotSurvival <- function(EpiMixResults,
-                                plot.probe,
-                                TCGA_CancerSite = NULL,
-                                clinical.df = NULL,
-                                font.legend = 16,
-                                font.x = 16,
-                                font.y = 16,
-                                font.tickslab = 14,
-                                legend= c(0.8,0.9),
-                                show.p.value = TRUE
-                                ){
-
-  if(!requireNamespace("survival")){
-    message("This function requires the 'survival' package.")
-    return(invisible())
-  }
-
-  if(!requireNamespace("survminer")){
-    message("This function requires the 'survival' package.")
-    return(invisible())
-  }
-
-  Classifications <- EpiMixResults$Classifications
-  Classifications <-TCGA_GENERIC_CleanUpSampleNames(Classifications, 12)
-
-  mixture.group <- Classifications[plot.probe,]
-  mixture.group <- data.frame(sample.id = names(mixture.group), State = mixture.group)
-  rownames(mixture.group) = NULL
-
-  # Download clinical data
-  if(!is.null(TCGA_CancerSite)){
-    file_path = paste0("gdac_20160128/gdac.broadinstitute.org_", TCGA_CancerSite, ".Merge_Clinical.Level_1.2016012800.0.0/", TCGA_CancerSite, ".merged_only_clinical_clin_format.txt")
-    if(!file.exists(file_path)){
-      cat(paste0("Downloading patient clinical data for ", TCGA_CancerSite))
-      clinical.data.directory = get_firehoseData(TCGA_acronym_uppercase = TCGA_CancerSite,
-                                                 dataFileTag = "Merge_Clinical.Level_1",
-                                                 saveDir = tempdir())
-      clinical.data = data.table::fread(paste0(clinical.data.directory, TCGA_CancerSite, ".merged_only_clinical_clin_format.txt"))
-    }else{
-      clinical.data = data.table::fread(file_path)
-    }
-    clinical.data=as.matrix(clinical.data)
-    rownames(clinical.data)=clinical.data[,1]
-    clinical.data = clinical.data[,-1]
-    clinical.data = clinical.data[-1,]
-    survival.info = data.frame(sample.id = toupper(clinical.data["patient.bcr_patient_barcode", ]),
-                               days_to_death = as.numeric(clinical.data["patient.days_to_death", ]),
-                               days_to_last_follow_up = as.numeric(clinical.data["patient.days_to_last_followup", ]))
-  }else{
-    survival.info = clinical.df
-  }
-
-  # Construct a dataframe for survival information. Status: 1 = censored, 2 = dead
-  survival.info <- survival.info %>%
-    mutate(
-      time = dplyr :: if_else(is.na(.data$days_to_death), .data$days_to_last_follow_up, .data$days_to_death),
-      status = dplyr :: if_else(is.na(.data$days_to_death), 1, 2)
-    )
-  survival.info <- survival.info[!is.na(survival.info$time), ]
-  survival.info <- survival.info[survival.info$time != 0, ]
-  target.survival <-merge(survival.info, mixture.group)
-  target.survival <- target.survival[order(target.survival$State), ]
-  survival <- survminer :: ggsurvplot(
-    survminer :: surv_fit(survival :: Surv(time, status) ~ State, data = target.survival),
-    pval = show.p.value,
-    legend.title = "mixture component",
-    legend.labs = unique(target.survival$State),
-    xlab = "Days",
-    ylab = "Overall survival probability",
-    palette = RColorBrewer::brewer.pal(8, "Set1")[1:length(unique(target.survival$State))],
-    font.legend = c(font.legend, "bold"),
-    font.x = c(font.x, "bold"),
-    font.y = c(font.y, "bold"),
-    font.tickslab = c(font.tickslab),
-    legend = legend
-  )
-  return(survival)
 }
 
 
@@ -1162,6 +887,8 @@ validEpigenomes <- function(roadmap.epigenome.groups, roadmap.epigenome.ids){
   selectedEpigenomes = unique(selectedEpigenomes)
   return(selectedEpigenomes)
 }
+
+
 
 
 

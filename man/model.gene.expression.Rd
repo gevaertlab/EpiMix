@@ -9,8 +9,8 @@ model.gene.expression(
   MET_matrix,
   gene.expression.data,
   target.genes,
-  state,
-  correlation = "negative"
+  correlation = "negative",
+  calculate.fold.change = TRUE
 )
 }
 \arguments{
@@ -22,14 +22,14 @@ model.gene.expression(
 
 \item{target.genes}{character vector with the names of the genes associated with the target CpGs.}
 
-\item{state}{methylation state for the target CpG, can be "Hyper", "Hypo" or "Dual".}
+\item{correlation}{character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".}
 
-\item{correlation}{the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".}
+\item{calculate.fold.change}{logic indicating whether to calculate fold change between different mixtures}
 }
 \value{
 a dataframe with fold change of gene expression and p values.
 }
 \description{
-The model.gene.expression function
+obtain a dataframe with the fold change of gene expression and signifcant p values
 }
 \keyword{internal}

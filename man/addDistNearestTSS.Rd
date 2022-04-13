@@ -17,6 +17,9 @@ addDistNearestTSS(data, NearGenes, genome, met.platform, cores = 1)
 
 \item{cores}{Number fo cores to be used. Deafult: 1}
 }
+\value{
+a dataframe of nearest genes with distance to TSS.
+}
 \description{
 Calculate the distance between probe and gene TSS
 }
