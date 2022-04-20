@@ -1,7 +1,0 @@
-"Gene","Probe","State","Proportion of hypo (%)","Proportion of hyper (%)","Fold change of gene expression","Comparators","Raw.p","Adjusted.p"
-"hsa-mir-196b","cg03987115","Hyper",0,67.647,0.781,"hyper vs normal",5.07711847845037e-07,1.01542369569007e-06
-"hsa-mir-196b","cg19351701","Hyper",0,67.647,0.797,"hyper vs normal",6.04614862862987e-06,8.06153150483982e-06
-"hsa-mir-196b","cg21172377","Hyper",0,78.733,0.754,"hyper vs normal",1.10521848968021e-07,4.42087395872083e-07
-"hsa-mir-196b","cg14625175","Hyper",0,87.557,0.76,"hyper vs normal",7.77140991626183e-05,7.77140991626183e-05
-"hsa-mir-34a","cg00909706","Hyper",0,20.136,0.96,"hyper vs normal",8.19981383323616e-05,8.19981383323616e-05
-"hsa-mir-9-3","cg25950235","Hyper",0,58.371,-7.158,"hyper vs normal",0.000237092132373097,0.000237092132373097
