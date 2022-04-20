@@ -8,12 +8,12 @@ ComBat_NoFiles(
   dat,
   saminfo,
   type = "txt",
-  write = F,
+  write = FALSE,
   covariates = "all",
-  par.prior = F,
-  filter = F,
+  par.prior = FALSE,
+  filter = FALSE,
   skip = 0,
-  prior.plots = T
+  prior.plots = TRUE
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ ComBat_NoFiles(
 \item{par.prior}{if 'T' uses the parametric adjustments, if 'F' uses the nonparametric adjustments--if you are unsure what to use, try the parametric adjustments (they run faster) and check the plots to see if these priors are reasonable.}
 
 \item{filter}{'filter=value' filters the genes with absent calls in > 1-value of the samples. The defaut here (as well as in dchip) is .8.
-Filter if you can as the EB adjustments work better after filtering. 
+Filter if you can as the EB adjustments work better after filtering.
 Filter must be numeric if your expression index file contains presence/absence calls (but you can set it >1 if you don't want to filter any genes) and must be 'F' if your data doesn't have presence/absence calls;}
 
 \item{skip}{is the number of columns that contain probe names and gene information, so 'skip=5' implies the first expression values are in column 6}

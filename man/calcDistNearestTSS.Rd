@@ -13,6 +13,9 @@ calcDistNearestTSS(links, TRange, tssAnnot)
 
 \item{tssAnnot}{TSS annotation}
 }
+\value{
+dataframe of genomic distance from TSS
+}
 \description{
 Idea
 For a given region R linked to X genes G

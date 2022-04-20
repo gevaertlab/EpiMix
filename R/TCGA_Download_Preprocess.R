@@ -373,8 +373,8 @@ TCGA_Preprocess_DNAmethylation <- function(CancerSite,
     # The EpiMix only takes one methylation matrix, so we combine cancer and normal into one matrix
     if(!is.null(MET_Data_Normal)){
       overlapProbes <- intersect(rownames(MET_Data_Cancer),rownames(MET_Data_Normal))
-      MET_Data_Cancer = MET_Data_Cancer[overlapProbes,,drop = F]
-      MET_Data_Normal = MET_Data_Normal[overlapProbes,,drop = F]
+      MET_Data_Cancer = MET_Data_Cancer[overlapProbes,,drop = FALSE]
+      MET_Data_Normal = MET_Data_Normal[overlapProbes,,drop = FALSE]
       MET_Data = cbind(MET_Data_Cancer, MET_Data_Normal)
       return(MET_Data)
     } else{
@@ -649,7 +649,7 @@ CorrectBatchEffect <- function(GEN_Data, BatchData, batch.correction.method, Min
   }
 
   BatchDataSelected=BatchData[which(BatchData[,1] %in% overlapSamples),]
-  GEN_Data = GEN_Data[,overlapSamples,drop = F]
+  GEN_Data = GEN_Data[,overlapSamples,drop = FALSE]
 
   # ---------------------------------------------------------------------------------------------
   # Step 2: Filter out small-sized batches (batches with size < MinInBatch)
@@ -732,9 +732,9 @@ CorrectBatchEffect <- function(GEN_Data, BatchData, batch.correction.method, Min
       overlapSamples = intersect(overlapSamples, colnames(integrated_data[[i]]))
     }
     cat("Found", length(overlapSamples), "overlap samples in different subsets.\n")
-    BatchCorrectedData = integrated_data[[1]][,overlapSamples, drop = F]
+    BatchCorrectedData = integrated_data[[1]][,overlapSamples, drop = FALSE]
     for (i in 2:length(integrated_data)){
-      BatchCorrectedData = rbind(BatchCorrectedData, integrated_data[[i]][,overlapSamples,drop = F])
+      BatchCorrectedData = rbind(BatchCorrectedData, integrated_data[[i]][,overlapSamples,drop = FALSE])
     }
   }else(
     BatchCorrectedData = integrated_data[[1]]
@@ -837,7 +837,7 @@ BatchCorrection_Seurat <- function(GEN_Data, BatchDataSelected){
   batch_counter = 1
   for (batch in unique(BatchDataSelected$MergedBatch)){
     batch_samples = BatchDataSelected[BatchDataSelected$MergedBatch == batch, 1]
-    data = GEN_Data[, as.character(batch_samples), drop = F]
+    data = GEN_Data[, as.character(batch_samples), drop = FALSE]
     suppressWarnings(
       seurat_objects[[batch_counter]] <- Seurat :: CreateSeuratObject(counts = data, project = paste0("MergedBatch_", batch))
     )
@@ -1234,8 +1234,8 @@ TCGA_Preprocess_GeneExpression <- function(CancerSite,
       MA_TCGA_Data = NULL
       if(!is.null(MA_TCGA_Normal)){
         overlapGenes = intersect(rownames(MA_TCGA_Cancer), rownames(MA_TCGA_Normal))
-        MA_TCGA_Cancer = MA_TCGA_Cancer[overlapGenes,,drop = F]
-        MA_TCGA_Normal = MA_TCGA_Normal[overlapGenes,,drop = F]
+        MA_TCGA_Cancer = MA_TCGA_Cancer[overlapGenes,,drop = FALSE]
+        MA_TCGA_Normal = MA_TCGA_Normal[overlapGenes,,drop = FALSE]
         MA_TCGA_Data = cbind(MA_TCGA_Cancer, MA_TCGA_Normal)
       } else{
         MA_TCGA_Data = MA_TCGA_Cancer
@@ -1280,9 +1280,9 @@ Preprocess_MAdata_Cancer <- function(CancerSite,
     MA_TCGA = TCGA_EstimateMissingValues_MolecularData(MA_TCGA, MissingValueThresholdGene, MissingValueThresholdSample)
     Samplegroups=TCGA_GENERIC_GetSampleGroups(colnames(MA_TCGA))
     if (CancerSite =='LAML') {
-        MA_TCGA=MA_TCGA[,Samplegroups$PeripheralBloodCancer,drop=F]
+        MA_TCGA=MA_TCGA[,Samplegroups$PeripheralBloodCancer,drop = FALSE]
     } else {
-        MA_TCGA=MA_TCGA[,Samplegroups$Primary,drop=F]
+        MA_TCGA=MA_TCGA[,Samplegroups$Primary,drop = FALSE]
     }
 
     if(doBatchCorrection){
@@ -1302,7 +1302,7 @@ Preprocess_MAdata_Cancer <- function(CancerSite,
     Genes=rownames(MA_TCGA)
     SplitGenes=limma::strsplit2(Genes,'\\|')
     rownames(MA_TCGA)=SplitGenes[,1]
-    MA_TCGA=MA_TCGA[!rownames(MA_TCGA) %in% '?',,drop=F]
+    MA_TCGA=MA_TCGA[!rownames(MA_TCGA) %in% '?',,drop = FALSE]
     MA_TCGA=TCGA_GENERIC_MergeData(unique(rownames(MA_TCGA)),MA_TCGA)
 
     return(MA_TCGA=MA_TCGA)
@@ -1335,10 +1335,10 @@ Preprocess_MAdata_Normal <- function(CancerSite,
     MA_TCGA = TCGA_EstimateMissingValues_MolecularData(MA_TCGA, MissingValueThresholdGene, MissingValueThresholdSample)
     Samplegroups=TCGA_GENERIC_GetSampleGroups(colnames(MA_TCGA))
     if (CancerSite =='LAML') {
-        MA_TCGA=MA_TCGA[,Samplegroups$BloodNormal,drop=F]
+        MA_TCGA=MA_TCGA[,Samplegroups$BloodNormal,drop = FALSE]
     } else {
         # MA_TCGA=MA_TCGA[,Samplegroups$SolidNormal]
-        MA_TCGA=MA_TCGA[,Samplegroups$SolidNormal,drop=F]
+        MA_TCGA=MA_TCGA[,Samplegroups$SolidNormal,drop = FALSE]
     }
 
     if(doBatchCorrection){
@@ -1359,7 +1359,7 @@ Preprocess_MAdata_Normal <- function(CancerSite,
     SplitGenes=limma::strsplit2(Genes,'\\|')
     rownames(MA_TCGA)=SplitGenes[,1]
     # MA_TCGA=MA_TCGA[!rownames(MA_TCGA) %in% '?',]
-    MA_TCGA=MA_TCGA[!rownames(MA_TCGA) %in% '?', , drop=F]
+    MA_TCGA=MA_TCGA[!rownames(MA_TCGA) %in% '?', , drop = FALSE]
     MA_TCGA=TCGA_GENERIC_MergeData(unique(rownames(MA_TCGA)),MA_TCGA)
 
     return(MA_TCGA=MA_TCGA)
@@ -1455,7 +1455,7 @@ TCGA_GENERIC_MergeData <-function(NewIDListUnique, DataMatrix) {
     for (i in 1:NrUniqueGenes) {
         currentID=NewIDListUnique[i]
         # tmpData=DataMatrix[which(rownames(DataMatrix) %in% currentID),]
-        tmpData=DataMatrix[which(rownames(DataMatrix) %in% currentID), , drop=F]
+        tmpData=DataMatrix[which(rownames(DataMatrix) %in% currentID), , drop=FALSE]
         if (length(rownames(tmpData)) >1) {
             MergedData[i,]=colMeans(tmpData)
         } else {

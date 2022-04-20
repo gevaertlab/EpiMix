@@ -11,7 +11,7 @@ NULL
 NULL
 
 #' The ComBat_NoFiles function
-#' 
+#'
 #' Internal. Performs batch correction.
 #' @param dat dat
 #' @param saminfo saminfo
@@ -20,28 +20,28 @@ NULL
 #' @param covariates 'covariates=all' will use all of the columns in your sample info file in the modeling (except array/sample name), if you only want use a some of the columns in your sample info file, specify these columns here as a vector (you must include the Batch column in this list).
 #' @param par.prior if 'T' uses the parametric adjustments, if 'F' uses the nonparametric adjustments--if you are unsure what to use, try the parametric adjustments (they run faster) and check the plots to see if these priors are reasonable.
 #' @param filter 'filter=value' filters the genes with absent calls in > 1-value of the samples. The defaut here (as well as in dchip) is .8.
-#' Filter if you can as the EB adjustments work better after filtering. 
-#' Filter must be numeric if your expression index file contains presence/absence calls (but you can set it >1 if you don't want to filter any genes) and must be 'F' if your data doesn't have presence/absence calls; 
+#' Filter if you can as the EB adjustments work better after filtering.
+#' Filter must be numeric if your expression index file contains presence/absence calls (but you can set it >1 if you don't want to filter any genes) and must be 'F' if your data doesn't have presence/absence calls;
 #' @param skip is the number of columns that contain probe names and gene information, so 'skip=5' implies the first expression values are in column 6
 #' @param prior.plots if true will give prior plots with black as a kernal estimate of the empirical batch effect density and red as the parametric estimate.
 #' @return Results.
 #' @keywords internal
 #'
-ComBat_NoFiles <- function(dat, saminfo, type='txt', write=F, covariates='all', par.prior=F, filter=F, skip=0, prior.plots=T){
+ComBat_NoFiles <- function(dat, saminfo, type='txt', write=FALSE, covariates='all', par.prior=FALSE, filter=FALSE, skip=0, prior.plots=TRUE){
      #debug: expression_xls='exp.txt'; sample_info_file='sam.txt'; type='txt'; write=T; covariates='all'; par.prior=T; filter=F; skip=0; prior.plots=T
-    
+
     # 'expression_xls' is the expression index file (e.g. outputted by dChip). I think it was replaced by dat, a matrix
     # 'sample_info_file' is a tab-delimited text file containing the colums: Array  name, sample name, Batch, and any other covariates to be included in the modeling. Also I think it was replaced by the data as R objects.
-    
+
     cat('Reading Sample Information File\n')
      #saminfo <- read.table(sample_info_file, header=T, sep='\t',comment.char='')
      if(sum(colnames(saminfo)=="Batch")!=1){return('ERROR: Sample Information File does not have a Batch column!')}
-     
+
      cat('Reading Expression Data File\n')
 #      if(type=='csv'){
 #           dat <- read.csv(expression_xls,header=T,row.names=1,as.is=T)
 #           #print(dat[1:2,])
-#           #	dat <- dat[,trim.dat(dat)]  
+#           #	dat <- dat[,trim.dat(dat)]
 #           #print(colnames(dat))
 #           #colnames(dat)=scan(expression_xls,what='character',nlines=1,sep=',',quiet=T)[1:ncol(dat)]
 #           #print(colnames(dat))
@@ -50,15 +50,15 @@ ComBat_NoFiles <- function(dat, saminfo, type='txt', write=F, covariates='all', 
           dat <- dat[,trim.dat(dat)]
           #colnames(dat)=scan(expression_xls,what='character',nlines=1,sep='\t',quiet=T)[1:ncol(dat)]
 #      }
-     
-     
+
+
      if (skip>0){
           geneinfo <- as.matrix(dat[,1:skip])
           dat <- dat[,-c(1:skip)]
      } else {
           geneinfo=NULL
      }
-     
+
      if(filter){
           ngenes <- nrow(dat)
           col <- ncol(dat)/2
@@ -67,23 +67,23 @@ ComBat_NoFiles <- function(dat, saminfo, type='txt', write=F, covariates='all', 
           if (skip>0){geneinfo <- geneinfo[present,]}
           cat('Filtered genes absent in more than',filter,'of samples. Genes remaining:',nrow(dat),'; Genes filtered:',ngenes-nrow(dat),'\n')
      }
-     
+
      if(any(apply(dat,2,mode)!='numeric')){return('ERROR: Array expression columns contain non-numeric values! (Check your .xls file for non-numeric values and if this is not the problem, make a .csv file and use the type=csv option)')}
-     
+
      tmp <- match(colnames(dat),saminfo[,1])
      if(any(is.na(tmp))){return('ERROR: Sample Information File and Data Array Names are not the same!')}
      tmp1 <- match(saminfo[,1],colnames(dat))
-     saminfo <- saminfo[tmp1[!is.na(tmp1)],]		
-     
+     saminfo <- saminfo[tmp1[!is.na(tmp1)],]
+
      if(any(covariates != 'all')){saminfo <- saminfo[,c(1:2,covariates)]}
-     design <- design.mat(saminfo)	
-     
-     
+     design <- design.mat(saminfo)
+
+
      batches <- list.batch(saminfo)
      n.batch <- length(batches)
      n.batches <- sapply(batches, length)
      n.array <- sum(n.batches)
-     
+
      ## Check for missing values
      NAs = any(is.na(dat))
      if(NAs){cat(c('Found',sum(is.na(dat)),'Missing Data Values\n'),sep=' ')}
@@ -92,30 +92,30 @@ ComBat_NoFiles <- function(dat, saminfo, type='txt', write=F, covariates='all', 
      cat('Standardizing Data across genes\n')
      if (!NAs){B.hat <- solve(t(design)%*%design)%*%t(design)%*%t(as.matrix(dat))}else{B.hat=apply(dat,1,Beta.NA,design)} #Standarization Model
      grand.mean <- t(n.batches/n.array)%*%B.hat[1:n.batch,]
-     if (!NAs){var.pooled <- ((dat-t(design%*%B.hat))^2)%*%rep(1/n.array,n.array)}else{var.pooled <- apply(dat-t(design%*%B.hat),1,var,na.rm=T)}
-     
+     if (!NAs){var.pooled <- ((dat-t(design%*%B.hat))^2)%*%rep(1/n.array,n.array)}else{var.pooled <- apply(dat-t(design%*%B.hat),1,var,na.rm=TRUE)}
+
      stand.mean <- t(grand.mean)%*%t(rep(1,n.array))
-     if(!is.null(design)){tmp <- design;tmp[,c(1:n.batch)] <- 0;stand.mean <- stand.mean+t(tmp%*%B.hat)}	
+     if(!is.null(design)){tmp <- design;tmp[,c(1:n.batch)] <- 0;stand.mean <- stand.mean+t(tmp%*%B.hat)}
      s.data <- (dat-stand.mean)/(sqrt(var.pooled)%*%t(rep(1,n.array)))
-     
+
      ##Get regression batch effect parameters
      cat("Fitting L/S model and finding priors\n")
      batch.design <- design[,1:n.batch]
      if (!NAs){gamma.hat <- solve(t(batch.design)%*%batch.design)%*%t(batch.design)%*%t(as.matrix(s.data))}else{gamma.hat=apply(s.data,1,Beta.NA,batch.design)}
      delta.hat <- NULL
      for (i in batches){
-          delta.hat <- rbind(delta.hat,apply(s.data[,i], 1, var,na.rm=T))
+          delta.hat <- rbind(delta.hat,apply(s.data[,i], 1, var,na.rm=TRUE))
      }
-     
+
      ##Find Priors
      gamma.bar <- apply(gamma.hat, 1, mean)
      t2 <- apply(gamma.hat, 1, var)
      a.prior <- apply(delta.hat, 1, aprior)
      b.prior <- apply(delta.hat, 1, bprior)
-     
-     
+
+
      ##Plot empirical and parametric priors
-     
+
      if (prior.plots & par.prior){
           pdf(file='prior_plots.pdf')
           par(mfrow=c(2,2))
@@ -123,22 +123,22 @@ ComBat_NoFiles <- function(dat, saminfo, type='txt', write=F, covariates='all', 
           plot(tmp,  type='l', main="Density Plot")
           xx <- seq(min(tmp$x), max(tmp$x), length=100)
           lines(xx,dnorm(xx,gamma.bar[1],sqrt(t2[1])), col=2)
-          qqnorm(gamma.hat[1,])	
-          qqline(gamma.hat[1,], col=2)	
-          
+          qqnorm(gamma.hat[1,])
+          qqline(gamma.hat[1,], col=2)
+
           tmp <- density(delta.hat[1,])
           invgam <- 1/rgamma(ncol(delta.hat),a.prior[1],b.prior[1])
           tmp1 <- density(invgam)
           plot(tmp,  typ='l', main="Density Plot", ylim=c(0,max(tmp$y,tmp1$y)))
           lines(tmp1, col=2)
-          qqplot(delta.hat[1,], invgam, xlab="Sample Quantiles", ylab='Theoretical Quantiles')	
-          lines(c(0,max(invgam)),c(0,max(invgam)),col=2)	
+          qqplot(delta.hat[1,], invgam, xlab="Sample Quantiles", ylab='Theoretical Quantiles')
+          lines(c(0,max(invgam)),c(0,max(invgam)),col=2)
           title('Q-Q Plot')
           dev.off()
      }
-     
+
      ##Find EB batch adjustments
-     
+
      gamma.star <- delta.star <- NULL
      if(par.prior){
           cat("Finding parametric adjustments\n")
@@ -155,18 +155,18 @@ ComBat_NoFiles <- function(dat, saminfo, type='txt', write=F, covariates='all', 
                delta.star <- rbind(delta.star,temp[2,])
           }
      }
-     
-     
+
+
      ### Normalize the Data ###
      cat("Adjusting the Data\n")
-     
+
      bayesdata <- s.data
      j <- 1
      for (i in batches){
           bayesdata[,i] <- (bayesdata[,i]-t(batch.design[i,]%*%gamma.star))/(sqrt(delta.star[j,])%*%t(rep(1,n.batches[j])))
           j <- j+1
      }
-     
+
      bayesdata <- (bayesdata*(sqrt(var.pooled)%*%t(rep(1,n.array))))+stand.mean
      if(write) {
           # output_file <- paste(expression_xls,'Adjusted','.txt',sep='_')
@@ -181,19 +181,19 @@ ComBat_NoFiles <- function(dat, saminfo, type='txt', write=F, covariates='all', 
      } else {
           return(cbind(rownames(dat),bayesdata))
      }
-     
+
 }
 
 # filters data based on presence/absence call
 filter.absent <- function(x,pct){
-     present <- T
+     present <- TRUE
      col <- length(x)/2
      pct.absent <- (sum(x[2*(1:col)]=="A") + sum(x[2*(1:col)]=="M"))/col
-     if(pct.absent > pct){present <- F}
+     if(pct.absent > pct){present <- FALSE}
      present
 }
 
-# Next two functions make the design matrix (X) from the sample info file 
+# Next two functions make the design matrix (X) from the sample info file
 build.design <- function(vec, des=NULL, start=2){
      tmp <- matrix(0,length(vec),nlevels(vec)-start+1)
      for (i in 1:ncol(tmp)){tmp[,i] <- vec==levels(vec)[i+start-1]}
@@ -248,7 +248,7 @@ it.sol  <- function(sdat,g.hat,d.hat,g.bar,t2,a,b,conv=.0001){
      count <- 0
      while(change>conv){
           g.new <- postmean(g.hat,g.bar,n,d.old,t2)
-          sum2 <- apply((sdat-g.new%*%t(rep(1,ncol(sdat))))^2, 1, sum,na.rm=T)
+          sum2 <- apply((sdat-g.new%*%t(rep(1,ncol(sdat))))^2, 1, sum,na.rm=TRUE)
           d.new <- postvar(sum2,n,a,b)
           change <- max(abs(g.new-g.old)/g.old,abs(d.new-d.old)/d.old)
           g.old <- g.new
@@ -271,11 +271,11 @@ int.eprior <- function(sdat,g.hat,d.hat){
     print(paste0(r,'\n'))
     adj<-foreach::foreach(i = 1:r, .combine = cbind) %dopar% {
         g <- g.hat[-i]
-        d <- d.hat[-i]		
+        d <- d.hat[-i]
         x <- sdat[i,!is.na(sdat[i,])]
         n <- length(x)
         j <- numeric(n)+1
-        dat <- matrix(as.numeric(x),length(g),n,byrow=T)
+        dat <- matrix(as.numeric(x),length(g),n,byrow=TRUE)
         resid2 <- (dat-g)^2
         sum2 <- resid2%*%j
         LH <- 1/(2*pi*d)^(n/2)*exp(-sum2/(2*d))
@@ -287,8 +287,8 @@ int.eprior <- function(sdat,g.hat,d.hat){
     }
     adjust <- rbind(unlist(adj[1,]),unlist(adj[2,]))
     rownames(adjust) <- c("g.star","d.star")
-    adjust	
-} 
+    adjust
+}
 
 #fits the L/S model in the presence of missing data values
 Beta.NA = function(y,X){

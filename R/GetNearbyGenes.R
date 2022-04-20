@@ -284,6 +284,7 @@ addDistNearestTSS <- function(
 #' @param TRange Genomic coordinates for Tartget region
 #' @param tssAnnot TSS annotation
 #' @importFrom dplyr slice left_join group_by_
+#' @return dataframe of genomic distance from TSS
 #' @author Tiago C. Silva
 calcDistNearestTSS <- function(
   links,

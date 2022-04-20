@@ -289,7 +289,7 @@ model.gene.expression <- function(target.probe,
   state = getMethStates_Helper(DM_values)
   high.met.samples = which(DM_values == max(DM_values))
   low.met.samples = which(DM_values == min(DM_values))
-  Exps = gene.expression.data[target.genes, ,drop = F]
+  Exps = gene.expression.data[target.genes, ,drop = FALSE]
   if(length(Exps) == 0) return(NULL)
   # calculate raw p values
   test.p <- unlist(lapply(splitmatrix(Exps),
@@ -670,7 +670,7 @@ mapTranscriptToGene <- function(transcripts){
   #df.miRNA.mapping = df.miRNA.mapping[!is.na(df.miRNA.mapping$Precursor), ]
 
   df.miRNA.mapping = data.frame(Transcript = transcripts)
-  df.miRNA.mapping = df.miRNA.mapping[!is.na(df.miRNA.mapping$Transcript), , drop = F]
+  df.miRNA.mapping = df.miRNA.mapping[!is.na(df.miRNA.mapping$Transcript), , drop = FALSE]
   gene_name = c()
   for (tr in transcripts){
     elements <- family <- number <- name <- NULL
@@ -699,7 +699,7 @@ mapTranscriptToGene <- function(transcripts){
     gene_name = c(gene_name, name)
   }
   df.miRNA.mapping$Gene_name = gene_name
-  df.miRNA.mapping = df.miRNA.mapping[!is.na(df.miRNA.mapping$Gene_name), , drop = F]
+  df.miRNA.mapping = df.miRNA.mapping[!is.na(df.miRNA.mapping$Gene_name), , drop = FALSE]
   return(df.miRNA.mapping)
 }
 

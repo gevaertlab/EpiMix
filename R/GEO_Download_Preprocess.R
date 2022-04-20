@@ -195,7 +195,7 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data,
     sample.map = sample.map[sample.map$assay == "DNA methylation", ]
     overlapSamples = intersect(sample.map$colnames, colnames(methylation.data))
     if(length(overlapSamples) > 0){
-      methylation.data = methylation.data[,overlapSamples, drop = F]
+      methylation.data = methylation.data[,overlapSamples, drop = FALSE]
       presentSamples = match(colnames(methylation.data), sample.map$colnames)
       sampleNames = sample.map$primary
       sampleNames = sampleNames[presentSamples]
@@ -224,7 +224,7 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data,
   MET_Experiment <-  MET_Control <- NULL
   if(!is.null(sample.info) & !is.null(group.1) & !is.null(group.2)){
     overlapSamples = intersect(sample.info$primary, colnames(methylation.data))
-    methylation.data = methylation.data[,overlapSamples,drop = F]
+    methylation.data = methylation.data[,overlapSamples,drop = FALSE]
     sample.info = sample.info[sample.info$primary %in% overlapSamples,]
     cat("Found", length(overlapSamples), "samples with sample information.\n")
     Samples_Experiment <- sample.info[sample.info$sample.type %in% group.1,"primary"]
@@ -283,8 +283,8 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data,
   if(!is.null(MET_Control) & ncol(MET_Control) > 0){
     overlapProbes <- intersect(rownames(MET_Experiment),rownames(MET_Control))
     cat("Found", length(overlapProbes), "overlapping probes between group.1 and group.2 after preprocessing...\n")
-    MET_Experiment = MET_Experiment[overlapProbes,,drop = F]
-    MET_Control = MET_Control[overlapProbes,,drop = F]
+    MET_Experiment = MET_Experiment[overlapProbes,,drop = FALSE]
+    MET_Control = MET_Control[overlapProbes,,drop = FALSE]
     MET_Data = cbind(MET_Experiment, MET_Control)
     return(MET_Data)
   } else{
@@ -371,7 +371,7 @@ GEO_Preprocess_GeneExpression <- function(gene.expression.data,
   MET_Experiment <-  MET_Control <- NULL
   if(!is.null(sample.info) & !is.null(group.1) & !is.null(group.2)){
     overlapSamples = intersect(sample.info$primary, colnames(gene.expression.data))
-    gene.expression.data = gene.expression.data[,overlapSamples,drop = F]
+    gene.expression.data = gene.expression.data[,overlapSamples,drop = FALSE]
     sample.info = sample.info[sample.info$primary %in% overlapSamples,]
     cat("Found", length(overlapSamples), "samples with sample information.\n")
     Samples_Experiment <- sample.info[sample.info$sample.type %in% group.1,"primary"]
@@ -426,8 +426,8 @@ GEO_Preprocess_GeneExpression <- function(gene.expression.data,
   ### Step 6: combine MET_Experiment and MET_Control into one matrix
   if(!is.null(MET_Control)){
     overlapProbes <- intersect(rownames(MET_Experiment),rownames(MET_Control))
-    MET_Experiment = MET_Experiment[overlapProbes,,drop = F]
-    MET_Control = MET_Control[overlapProbes,,drop = F]
+    MET_Experiment = MET_Experiment[overlapProbes,,drop = FALSE]
+    MET_Control = MET_Control[overlapProbes,,drop = FALSE]
     MET_Data = cbind(MET_Experiment, MET_Control)
     return(as.matrix(MET_Data))
   } else{
@@ -474,7 +474,7 @@ convertGeneNames <- function(gene.expression.data){
     #filter only genes with ensembl annotation
     overlapGenes = intersect(ensembl_gene_map[[filter]], rownames(gene.expression.data)) #16,033
     #cat("Removing", nrow(gene.expression.data) - length(overlapGenes), "transcripts that can not be mapped to human genes.\n")
-    gene.expression.data = gene.expression.data[overlapGenes,,drop = F]
+    gene.expression.data = gene.expression.data[overlapGenes,,drop = FALSE]
     presentEnsemblID = match(rownames(gene.expression.data), ensembl_gene_map$ensembl_gene_id)
     geneNames <- ensembl_gene_map$hgnc_symbol
     geneNames <- geneNames[presentEnsemblID]
@@ -491,7 +491,7 @@ convertGeneNames <- function(gene.expression.data){
 removeDuplicatedGenes <- function(GEN_data){
   cat("Removing duplicated transcripts...\n")
   duplicatedGenes = rownames(GEN_data)[duplicated(rownames(GEN_data))]
-  singleGenes = GEN_data[!rownames(GEN_data) %in% duplicatedGenes,,drop = F]
+  singleGenes = GEN_data[!rownames(GEN_data) %in% duplicatedGenes,,drop = FALSE]
 
   uniqueGenes = unique(duplicatedGenes)
   exp = data.frame()
@@ -499,7 +499,7 @@ removeDuplicatedGenes <- function(GEN_data){
   pb <- txtProgressBar(max = iterations, style = 3)
   for(i in 1:iterations){
     gene = uniqueGenes[i]
-    temp = GEN_data[which(rownames(GEN_data) == gene),,drop = F]
+    temp = GEN_data[which(rownames(GEN_data) == gene),,drop = FALSE]
     if(nrow(temp) > 1){
       temp = matrix(apply(temp,2, sum), nrow =1)
       colnames(temp) = colnames(data)

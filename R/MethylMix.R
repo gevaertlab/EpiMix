@@ -139,7 +139,7 @@ MethylMix_ModelSingleGene <-function(GeneName, METdataVector, METdataNormalVecto
 
     # See differences between model's means to compare them to threshold
     model.means = sort(mods[[comp]]$mu)
-    different.means = ifelse(all(abs(diff(model.means)) > MeanDifferenceTreshold), T, F)
+    different.means = ifelse(all(abs(diff(model.means)) > MeanDifferenceTreshold), TRUE, FALSE)
 
     # Check if smallest group has at least minSamplesPerGroup observations:
     if (minSamplesPerGroup < 0) {
@@ -528,7 +528,7 @@ EpiMix_PlotModel <- function(EpiMixResults,
     if (!is.null(gene.expression.data)) {
       OverlapSamples = intersect(colnames(gene.expression.data), colnames(EpiMixResults$Classification))
     }
-    data <- data.frame(met = methylation.data[Probe, OverlapSamples, drop = F][1,],
+    data <- data.frame(met = methylation.data[Probe, OverlapSamples, drop = FALSE][1,],
                        group = factor(EpiMixResults$Classification[Probe, OverlapSamples],
                                       levels = 1:length(unique(EpiMixResults$Classification[Probe, OverlapSamples]))))
     if (!is.null(gene.expression.data)) data$ge <- as.numeric(gene.expression.data[GeneName, OverlapSamples])
@@ -688,7 +688,7 @@ predictOneGene <- function(newVector, mixtureModel) {
   posteriorProb <- apply(numerator, 1, function(x) x / denominator)
   # If densities are all 0 (can happen for x near 0 or 1), denominator is 0, assign mixing prop as posterior prob
   idx <- which(denominator == 0)
-  if (length(idx) > 0) posteriorProb[idx, ] <- matrix(mixtureModel$eta, nrow = length(idx), ncol = length(mixtureModel$eta), byrow = T)
+  if (length(idx) > 0) posteriorProb[idx, ] <- matrix(mixtureModel$eta, nrow = length(idx), ncol = length(mixtureModel$eta), byrow = TRUE)
   predictedMixtureComponent <- apply(posteriorProb, 1, which.max)
   return(predictedMixtureComponent)
 }

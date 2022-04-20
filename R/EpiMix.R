@@ -135,24 +135,23 @@ EpiMix <- function(methylation.data,
   stopifnot(
     is.matrix(methylation.data),
     is.null(gene.expression.data) | is.matrix(gene.expression.data) | is.data.frame(gene.expression.data),
-    class(mode) == "character",
+    is(mode, "character"),
     class(sample.info) %in% c("data.frame", "matrix"),
     class(group.1) %in% c("character", "NULL"),
     class(group.2) %in% c("character", "NULL"),
-    class(promoters) == "logical",
-    class(met.platform) == "character",
-    class(genome) == "character",
+    is(promoters, "logical"),
+    is(met.platform, "character"),
+    is(genome, "character"),
     class(listOfGenes) %in% c("character", "NULL"),
-    #class(filter) == "logical",
-    class(raw.pvalue.threshold) == "numeric",
-    class(adjusted.pvalue.threshold) == "numeric",
-    class(numFlankingGenes) == "numeric",
+    is(raw.pvalue.threshold, "numeric"),
+    is(adjusted.pvalue.threshold, "numeric"),
+    is(numFlankingGenes, "numeric"),
     class(roadmap.epigenome.groups) %in% c("character", "NULL"),
     class(roadmap.epigenome.ids) %in% c("character", "NULL"),
     class(chromatin.states) %in% c("character", "NULL"),
-    class(NoNormalMode) == "logical",
-    class(cores) == "numeric",
-    class(OutputRoot) == "character"
+    is(NoNormalMode, "logical"),
+    is(cores, "numeric"),
+    is(OutputRoot, "character")
   )
 
   if(nrow(methylation.data) == 0){
@@ -192,10 +191,10 @@ EpiMix <- function(methylation.data,
     target.samples = sample.info$primary[which(sample.info$sample.type %in% c(group.1, group.2))]
     sample.info = sample.info[sample.info$primary %in% target.samples,]
     overlapSamples.met = intersect(colnames(methylation.data), target.samples)
-    methylation.data = methylation.data[,overlapSamples.met, drop = F]
+    methylation.data = methylation.data[,overlapSamples.met, drop = FALSE]
     if(!is.null(gene.expression.data)){
       overlapSamples.exp = intersect(colnames(gene.expression.data), target.samples)
-      gene.expression.data = gene.expression.data[,overlapSamples.exp, drop = F]
+      gene.expression.data = gene.expression.data[,overlapSamples.exp, drop = FALSE]
     }
   }
 
@@ -212,7 +211,7 @@ EpiMix <- function(methylation.data,
                                      met.platform = met.platform,
                                      genome = genome)
     overlapProbes = unique(intersect(ProbeAnnotation$probe, rownames(methylation.data)))
-    methylation.data = methylation.data[overlapProbes,,drop = F]
+    methylation.data = methylation.data[overlapProbes,,drop = FALSE]
 
     ### Step 2: modeling the gene expression using the methylation data (beta values scale) to select functional probes
     FunctionalProbes = NULL
@@ -299,7 +298,7 @@ EpiMix <- function(methylation.data,
                                     met.platform = met.platform,
                                     genome = genome)
     overlapProbes = unique(intersect(ProbeAnnotation$probe, rownames(methylation.data)))
-    methylation.data = methylation.data[overlapProbes,,drop = F]
+    methylation.data = methylation.data[overlapProbes,,drop = FALSE]
 
     ### Step 2: split methylation data into group.1 and group.2
     MET_Experiment <-  MET_Control <- NULL
@@ -375,7 +374,7 @@ EpiMix <- function(methylation.data,
                                     met.platform = met.platform,
                                     genome = genome)
     overlapProbes = unique(intersect(ProbeAnnotation$probe, rownames(methylation.data)))
-    methylation.data = methylation.data[overlapProbes,,drop = F]
+    methylation.data = methylation.data[overlapProbes,,drop = FALSE]
 
 
     ### Step 2: split methylation data into group.1 and group.2
@@ -468,8 +467,8 @@ EpiMix <- function(methylation.data,
       enhancer.probes = intersect(distal.probes, RoadMap.enhancer.probes$probeID)
       presentEnhancerProbes = intersect(rownames(MET_Experiment), enhancer.probes)
       cat("Found", length(presentEnhancerProbes), "CpGs associated with distal enhancers in the methylation dataset\n")
-      MET_Experiment <- MET_Experiment[presentEnhancerProbes, ,drop = F]
-      MET_Control <- MET_Control[presentEnhancerProbes, ,drop = F]
+      MET_Experiment <- MET_Experiment[presentEnhancerProbes, ,drop = FALSE]
+      MET_Control <- MET_Control[presentEnhancerProbes, ,drop = FALSE]
 
       FunctionalGenes = rownames(MET_Experiment)
       MethylMixResults <- MethylMix_MixtureModel(MET_Experiment, MET_Control, FunctionalGenes, NoNormalMode = FALSE)
@@ -503,7 +502,7 @@ EpiMix <- function(methylation.data,
     # Get nearby genes for the differentially methylated CpGs
     DM.probes = rownames(MET_matrix)
     geneAnnot <- getTSS(genome = genome) #ELMER function to retrieve a GRange object that contains coordinates of promoters for human genome.
-    DM.probes.annotation = ProbeAnnotation[which(names(ProbeAnnotation) %in% DM.probes), ,drop = F]
+    DM.probes.annotation = ProbeAnnotation[which(names(ProbeAnnotation) %in% DM.probes), ,drop = FALSE]
     NearbyGenes <- GetNearGenes(geneAnnot = geneAnnot,
                                 TRange = DM.probes.annotation,
                                 numFlankingGenes = numFlankingGenes)
@@ -534,7 +533,7 @@ EpiMix <- function(methylation.data,
     else{
       progress <- function(n) utils :: setTxtProgressBar(pb, n)
       opts <- list(progress = progress)
-      FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = F)  %dopar% {
+      FunctionalPairs <- foreach :: foreach(i = 1:iterations, .combine = rbind, .options.snow= opts, .verbose = FALSE)  %dopar% {
         target.probe = DM.probes[i]
         target.genes =  NearbyGenes$Symbol[which(NearbyGenes$ID == target.probe)]
         target.genes = intersect(target.genes, rownames(gene.expression.data))

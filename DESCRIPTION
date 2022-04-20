@@ -58,6 +58,6 @@ Suggests:
   survival,
   survminer,
   TxDb.Hsapiens.UCSC.hg19.knownGene
-biocViews: DNAMethylation, DifferentialMethylation, MethylationArray,  GeneExpression, Transcription, FunctionalAnnotation, Pathways, Survival, Preprocessing, Visualization, Software
+biocViews: Software, Epigenetics, DNAMethylation, GeneExpression, DifferentialMethylation
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr
