@@ -47,17 +47,15 @@
 #' numFlankingGenes = 10
 #'
 #' # Set up the reference cell/tissue type
-#' roadmap.epigenome.id = "E096"      # "E096" indicates lung
+#' roadmap.epigenome.id = "E096"
 #'
 #' # Generate the plot
 #' EpiMix_PlotProbe(probe.name,
-#'                 EpiMixResults = Sample_EpiMixResults_Regular,
+#'                  EpiMixResults = Sample_EpiMixResults_Regular,
 #'                  met.platform = "HM450",
 #'                  roadmap.epigenome.id = roadmap.epigenome.id,
-#'                  numFlankingGenes = numFlankingGenes,
-#'                  left.gene.margin = 10000,  # left graph margin in nucleotide base pairs
-#'                  right.gene.margin = 10000  # right graph margin in nucleotide base pairs
-#'                  )
+#'                  numFlankingGenes = numFlankingGenes)
+#'
 #' }
 #'
 EpiMix_PlotProbe <- function(probe.name,

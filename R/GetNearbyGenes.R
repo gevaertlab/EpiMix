@@ -5,6 +5,9 @@
 #'@importFrom dplyr slice left_join group_by_ full_join filter do
 NULL
 
+#'@import ELMER.data
+NULL
+
 # NearGenes
 # @param Target A charactor which is name of TRange or one of rownames of TBed.
 # @param Gene A GRange object contains coordinates of promoters for human genome.

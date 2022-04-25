@@ -40,13 +40,13 @@
 #'
 #' gene.name = "CCND2"
 #'
-#' roadmap.epigenome.id = "E096"   # "E096" indicates lung.
+#' roadmap.epigenome.id = "E096"
 #'
 #' EpiMix_PlotGene(gene.name = gene.name,
 #'                 EpiMixResults = Sample_EpiMixResults_Regular,
-#'                met.platform = "HM450",
-#'                roadmap.epigenome.id = roadmap.epigenome.id
-#' )}
+#'                 met.platform = "HM450",
+#'                 roadmap.epigenome.id = roadmap.epigenome.id)
+#' }
 #'
 EpiMix_PlotGene <- function(gene.name,
                       EpiMixResults,

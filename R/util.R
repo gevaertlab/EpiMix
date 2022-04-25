@@ -799,7 +799,7 @@ function.enrich <- function(EpiMixResults,
   if(enrich.method == "GO"){
     ego <- clusterProfiler :: enrichGO(names(gene.vector), OrgDb = "org.Hs.eg.db", ont = ont, pvalueCutoff = pvalueCutoff, pAdjustMethod = pAdjustMethod, qvalueCutoff = qvalueCutoff, readable = TRUE)
   }else if(enrich.method == "KEGG"){
-    ego <- clusterProfiler :: enrichKEGG(names(gene.vector), pvalueCutoff = pvalueCutoff, pAdjustMethod = pAdjustMethod, qvalueCutoff = qvalueCutoff, readable = TRUE)
+    ego <- clusterProfiler :: enrichKEGG(names(gene.vector), pvalueCutoff = pvalueCutoff, pAdjustMethod = pAdjustMethod, qvalueCutoff = qvalueCutoff)
   }
   if(simplify & enrich.method == "GO"){
     ego <- clusterProfiler :: simplify(ego, cutoff = cutoff)

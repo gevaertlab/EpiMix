@@ -19,8 +19,12 @@ NULL
 #' @return a list with two elements. The first element ("$MethylationData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
 #' @export
 #' @keywords download
+#' @example
+#' \dontrun{
+#' METdirectories <- GEO_Download_DNAMethylation(AccessionID = "GSE114134", targetDirectory = tempdir())
+#' }
 
-GEO_Download_DNAMethylation <- function(AccessionID,targetDirectory = '.', DownloadData = TRUE) {
+GEO_Download_DNAMethylation <- function(AccessionID, targetDirectory = '.', DownloadData = TRUE) {
 
   # set the environmental variable to deal with the long file name issue
   #Sys.setenv("VROOM_CONNECTION_SIZE" = 131072 * 100)
@@ -55,6 +59,10 @@ GEO_Download_DNAMethylation <- function(AccessionID,targetDirectory = '.', Downl
 #' @return a list with two elements. The first element ("$GeneExpressionData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
 #' @export
 #' @keywords download
+#' @example
+#' \dontrun{
+#' GEdirectories <- GEO_Download_GeneExpression(AccessionID = "GSE114065", targetDirectory = tempdir())
+#' }
 
 GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', DownloadData = TRUE) {
 
