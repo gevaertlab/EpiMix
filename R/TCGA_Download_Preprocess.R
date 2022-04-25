@@ -1005,14 +1005,14 @@ TCGA_Download_GeneExpression <- function(CancerSite, TargetDirectory, mode = "Re
 #'
 #' # Example #1: Preprocessing gene expression for Regular mode
 #'
-#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
-#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",  MAdirectories = GEdirectories)
+#' # GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
+#' # GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",  MAdirectories = GEdirectories)
 #'
 #' # Example #2: Preprocessing gene expression for miRNA mode
 #'
-#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
-#'                                               TargetDirectory = tempdir(),
-#'                                               mode = "miRNA")
+#' # GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+#' #                                               TargetDirectory = tempdir(),
+#' #                                               mode = "miRNA")
 #'
 #' # GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",
 #' #                                                    MAdirectories = GEdirectories,
