@@ -45,17 +45,15 @@ Kaplan-meier survival curve showing the survival time for patients with differen
 function to plot Kaplan-meier survival curves for patients with different methylation state of a specific probe.
 }
 \examples{
-\dontrun{
+{
 library(survival)
 library(survminer)
 
-# Select the target CpG site whose methylation states will be evaluated
-Probe = "cg00909706"
+data(Sample_EpiMixResults_miRNA)
 
-# Generate the graph
 EpiMix_PlotSurvival(EpiMixResults = Sample_EpiMixResults_miRNA,
-                    plot.probe = Probe,
-                    TCGA_CancerSite = CancerSite)
+                    plot.probe = "cg00909706",
+                    TCGA_CancerSite = "LUAD")
 }
 
 }

@@ -19,3 +19,5 @@ dataframe with three columns: $assay (character string indicating the type of th
 \description{
 auxiliary function to generate a sample map for DNA methylation data and gene expression data
 }
+\keyword{purpose}
+\keyword{testing}

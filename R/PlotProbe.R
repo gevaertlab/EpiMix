@@ -31,7 +31,7 @@
 #' They can also be retrieved from the list.epigenomes() function.
 #' @export
 #' @examples
-#' \dontrun{
+#' {
 #' library(karyoploteR)
 #' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 #' library(org.Hs.eg.db)
@@ -43,14 +43,13 @@
 #' probe.name = "cg00374492"
 #'
 #' # The number of adjacent genes to be plotted
-#' # Warnings: setting the gene number to a high value (>20 genes) may blow the internal memory
 #' numFlankingGenes = 10
 #'
 #' # Set up the reference cell/tissue type
 #' roadmap.epigenome.id = "E096"
 #'
 #' # Generate the plot
-#' EpiMix_PlotProbe(probe.name,
+#' EpiMix_PlotProbe(probe.name = probe.name,
 #'                  EpiMixResults = Sample_EpiMixResults_Regular,
 #'                  met.platform = "HM450",
 #'                  roadmap.epigenome.id = roadmap.epigenome.id,
@@ -90,6 +89,11 @@ EpiMix_PlotProbe <- function(probe.name,
   if(!requireNamespace("org.Hs.eg.db")){
     message("This function requires the 'org.Hs.eg.db' package.")
     return(invisible())
+  }
+
+  if(numFlankingGenes > 10){
+    warnings("Setting the number of flanking genes > 10 may blow the internal memory.Try to set
+             a smaller gene number as possible")
   }
 
   # get nearby genes of the probe

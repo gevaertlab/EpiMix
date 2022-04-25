@@ -8,10 +8,8 @@
 #' @export
 #' @keywords download
 #' @examples
-#' \dontrun{
-#' CancerSite <- "OV"
-#' targetDirctory <- paste0(getwd(), "/Data")
-#' METdirectories <- TCGA_Download_DNAmethylation(CancerSite, targetDirectory)
+#' {
+#' METdirectories <- TCGA_Download_DNAmethylation(CancerSit = "OV", TargetDirectory = tempdir())
 #' }
 #'
 TCGA_Download_DNAmethylation <- function(CancerSite,
@@ -142,7 +140,6 @@ get_firehoseData <- function(downloadData=TRUE,
             cat("\tThis may take 10-60 minutes depending on the size of the data set.\n")
             dir.create(saveDir,showWarnings=FALSE)
             # download file
-            #setwd(saveDir)
             download.file(gdacURL,destfile = paste0(saveDir,fileName),quiet=FALSE,mode="wb")
             #this assumes a tar.gz file.
             if(fileType=="tar.gz" && untarUngzip) {
@@ -206,7 +203,6 @@ get_firehoseData <- function(downloadData=TRUE,
     }
 }
 
-
 #' The TCGA_Preprocess_DNAmethylation function
 #'
 #' @description Pre-processes DNA methylation data from TCGA.
@@ -224,11 +220,10 @@ get_firehoseData <- function(downloadData=TRUE,
 #' @export
 #' @keywords preprocess
 #' @examples
-#' \dontrun{
-#' CancerSite <- "OV"
-#' targetDirctory <- paste0(getwd(), "/Data")
-#' METdirectories <- TCGA_Download_DNAmethylation(CancerSite, targetDirectory)
-#' METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite, METdirectories)
+#' {
+#' METdirectories <- TCGA_Download_DNAmethylation(CancerSite = "OV", TargetDirectory = tempdir())
+#' # METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite = "OV",
+#' #                                                    METdirectories = METdirectories)
 #' }
 
 TCGA_Preprocess_DNAmethylation <- function(CancerSite,
@@ -923,43 +918,23 @@ BatchCorrection_Combat <- function(GEN_Data, BatchDataSelected){
 #' @export
 #' @keywords download
 #' @examples
-#' \dontrun{
+#' {
 #' # Example #1 : download regular gene expression data for ovarian cancer
-#' CancerSite <- "OV"
-#' mode <- "Regular"
-#' targetDirectory <- paste0(getwd(), "/Data")
-#' GEdirectories <- Download_GeneExpression(CancerSite,
-#'                                          targetDirectory,
-#'                                          mode = mode
-#'                                          )
+#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
+#'
+#' # Example #2 : download miRNA expression data for ovarian cancer
+#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+#'                                               TargetDirectory = tempdir(),
+#'                                               mode = "miRNA")
+#'
+#' # Example #3 : download lncRNA expression data for ovarian cancer
+#' # GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+#' #                                               TargetDirectory = tempdir(),
+#' #                                                mode = "lncRNA")
 #' }
-#' \dontrun{
-#' # Example #2 : download miRNA gene expression data for ovarian cancer
-#' CancerSite <- "OV"
-#' mode <- "miRNA"
-#' targetDirectory <- paste0(getwd(), "/Data")
+
 #'
-#' # Download gene expression data
-#' GEdirectories <- Download_GeneExpression(CancerSite,
-#'                                          targetDirectory,
-#'                                          mode = mode
-#'                                          )
-#' }
-#' \dontrun{
-#' # Example #3 : download lncRNA gene expression data for ovarian cancer
-#' CancerSite <- "OV"
-#' mode <- "lncRNA"
-#' targetDirectory <- paste0(getwd(), "/Data")
-#'
-#' # Download gene expression data
-#' GEdirectories <- Download_GeneExpression(CancerSite,
-#'                                          targetDirectory,
-#'                                          mode = mode
-#'                                          )
-#' }
-#'
-#'
-TCGA_Download_GeneExpression <- function(CancerSite,TargetDirectory, mode = "Regular", downloadData=TRUE) {
+TCGA_Download_GeneExpression <- function(CancerSite, TargetDirectory, mode = "Regular", downloadData=TRUE) {
 
    mode = tolower(mode)
    if(!mode %in% c("regular", "enhancer", "mirna", "lncrna")){
@@ -1026,28 +1001,34 @@ TCGA_Download_GeneExpression <- function(CancerSite,TargetDirectory, mode = "Reg
 #' @export
 #' @keywords preprocess
 #' @examples
-#' \dontrun{
-#' # Preprocess the gene expression data of ovarian cancer for the use of Regular mode
-#' mode <- "Regular"
-#' targetDirectory <- paste0(getwd(), "/Data")
-#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
-#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
-#' }
-#' \dontrun{
-#' # Preprocess the gene expression data of ovarian cancer for the use of miRNA mode
-#' mode <- "miRNA"
-#' targetDirectory <- paste0(getwd(), "/Data")
-#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
-#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
-#' }
-#' \dontrun{
-#' # Preprocess the gene expression data of ovarian cancer for the use of lncRNA mode
-#' mode <- "lncRNA"
-#' targetDirectory <- paste0(getwd(), "/Data")
-#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
-#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
-#' }
+#' {
 #'
+#' # Example #1: Preprocessing gene expression for Regular mode
+#'
+#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
+#' GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",  MAdirectories = GEdirectories)
+#'
+#' # Example #2: Preprocessing gene expression for miRNA mode
+#'
+#' GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+#'                                               TargetDirectory = tempdir(),
+#'                                               mode = "miRNA")
+#'
+#' # GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",
+#' #                                                    MAdirectories = GEdirectories,
+#' #                                                    mode = "miRNA")
+#'
+#' # Example #3: Preprocessing gene expression for lncRNA mode
+#'
+#' # GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+#' #                                               TargetDirectory = tempdir(),
+#' #                                               mode = "lncRNA")
+#'
+#' # GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",
+#' #                                                   MAdirectories = GEdirectories,
+#' #                                                   mode = "lncRNA")
+#'
+#' }
 #'
 TCGA_Preprocess_GeneExpression <- function(CancerSite,
                                            MAdirectories,
@@ -1535,12 +1516,17 @@ TCGA_GENERIC_MET_ClusterProbes_Helper_ClusterGenes_with_hclust <- function(Gene,
 #' @details Generate the "sample.info" dataframe for TCGA data.
 #' @param METProcessedData Matrix of preprocessed methylation data.
 #' @param CancerSite Character string of TCGA study abbreviation.
-#' @param targetDirectory Path to save the sample.info. Default: NULL.
+#' @param TargetDirectory Path to save the sample.info. Default: "".
 #'
 #' @return A dataframe for the sample groups. Contains two columns: the first column (named: "primary") indicating the sample names, and the second column (named: "sample.type") indicating whether each sample is a Cancer or Normal tissue.
 #' @export
+#' @examples
+#' {
+#' data(MET.data)
+#' sample.info <- TCGA_GetSampleInfo(MET.data, CancerSite = "LUAD")
+#' }
 
-TCGA_GetSampleInfo <- function(METProcessedData, CancerSite = "LUAD", targetDirectory = NULL){
+TCGA_GetSampleInfo <- function(METProcessedData, CancerSite = "LUAD", TargetDirectory = ""){
   # Split up normal and cancer data
   Samplegroups <- cancer_samples <- normal_samples <- NULL
   Samplegroups=TCGA_GENERIC_GetSampleGroups(colnames(METProcessedData))
@@ -1557,8 +1543,8 @@ TCGA_GetSampleInfo <- function(METProcessedData, CancerSite = "LUAD", targetDire
   df.cancer = data.frame(primary = cancer_samples, sample.type = rep("Cancer", length(cancer_samples)))
   df.normal = data.frame(primary = normal_samples, sample.type = rep("Normal", length(normal_samples)))
   sample.info = rbind(df.cancer, df.normal)
-  if(!is.null(targetDirectory)){
-    utils :: write.csv(sample.info, paste0(targetDirectory, "/", "sample.info.csv"), row.names = FALSE)
+  if(TargetDirectory!=""){
+    utils :: write.csv(sample.info, paste0(TargetDirectory, "/", "sample.info.csv"), row.names = FALSE)
   }
   cat("There are",length(cancer_samples),"cancer samples and",length(normal_samples),"normal samples in",CancerSite,"\n")
   return(sample.info)

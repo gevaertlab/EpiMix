@@ -39,11 +39,10 @@ Pre-process includes eliminating samples and genes with too many NAs, imputing N
 If there are samples with both 27k and 450k data, the 27k data will be used only if the sample number in the 27k data is greater than the 450k data and there is more than 50 samples in the 27k data. Otherwise, the 450k data is used and the 27k data is discarded.
 }
 \examples{
-\dontrun{
-CancerSite <- "OV"
-targetDirctory <- paste0(getwd(), "/Data")
-METdirectories <- TCGA_Download_DNAmethylation(CancerSite, targetDirectory)
-METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite, METdirectories)
+{
+METdirectories <- TCGA_Download_DNAmethylation(CancerSite = "OV", TargetDirectory = tempdir())
+# METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite = "OV",
+#                                                    METdirectories = METdirectories)
 }
 }
 \keyword{preprocess}

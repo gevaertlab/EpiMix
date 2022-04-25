@@ -19,3 +19,5 @@ a dataframe with two columns: a "primary" column indicating the actual sample na
 \description{
 auxiliary function to generate a sample information dataframe that indicates which study group each sample belongs to.
 }
+\keyword{purpose}
+\keyword{testing}

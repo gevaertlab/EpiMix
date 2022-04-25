@@ -45,31 +45,19 @@ a clusterProfiler enrichResult instance
 Perform functional enrichment analysis for the differentially methylated genes occurring in the significant CpG-gene pairs.
 }
 \examples{
-\dontrun{
+{
 library(clusterProfiler)
 library(org.Hs.eg.db)
 
 data(Sample_EpiMixResults_Regular)
 
-# Check the functions of both the hypo- and hypermethylated genes.
-methylation.state = "all"
-
-# Use the gene ontology for functional analysis.
-enrich.method = "GO"
-
-# Use the "biological process" sub-term
-selected.pathways = "BP"
-
-# Perform enrichment analysis
 enrich.results <- function.enrich(
   EpiMixResults = Sample_EpiMixResults_Regular,
-  methylation.state = methylation.state,
-  enrich.method = enrich.method,
-  ont = selected.pathways,
-  simplify = TRUE,  # get rid of overlapping pathways
+  enrich.method = "GO",
+  ont = "BP",
+  simplify = TRUE,
   save.dir = ""
 )
-
 }
 
 }

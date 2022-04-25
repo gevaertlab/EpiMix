@@ -118,12 +118,12 @@ outputDirectory = tempdir()
 
 # We compare the DNA methylation in cancer (group.1) to the normal (group.2) tissues
 EpiMixResults_Regular <- EpiMix(methylation.data = MET.data,
-                       gene.expression.data = mRNA.data,
-                       sample.info = LUAD.sample.annotation,
-                       group.1 = "Cancer",
-                       group.2 = "Normal",
-                       met.platform = "HM450",
-                       OutputRoot =  outputDirectory)
+                                 gene.expression.data = mRNA.data,
+                                 sample.info = LUAD.sample.annotation,
+                                 group.1 = "Cancer",
+                                 group.2 = "Normal",
+                                 met.platform = "HM450",
+                                 OutputRoot =  outputDirectory)
 ```
 
 ```{r message=FALSE, warning=FALSE}
@@ -164,15 +164,15 @@ outputDirectory = tempdir()
 
 # Third, run EpiMix
 EpiMixResults_Enhancer <- EpiMix(
-                        methylation.data = MET.data, 
-                        gene.expression.data = mRNA.data,
-                        mode = mode,
-                        roadmap.epigenome.ids = roadmap.epigenome.ids,
-                        sample.info = LUAD.sample.annotation,
-                        group.1 = "Cancer",
-                        group.2 = "Normal",
-                        met.platform = "HM450",
-                        OutputRoot =  outputDirectory )
+                                methylation.data = MET.data, 
+                                gene.expression.data = mRNA.data,
+                                mode = mode,
+                                roadmap.epigenome.ids = roadmap.epigenome.ids,
+                                sample.info = LUAD.sample.annotation,
+                                group.1 = "Cancer",
+                                group.2 = "Normal",
+                                met.platform = "HM450",
+                                OutputRoot =  outputDirectory)
 ```
 
 ### 4.3 miRNA mode
@@ -436,7 +436,7 @@ To identify the hypo- or hyper-methylated genes, EpiMix compares the DNA methyla
 ```{r, message = FALSE, results='hide'}
 sample.info = TCGA_GetSampleInfo(METProcessedData = METProcessedData,
                                  CancerSite = CancerSite, 
-                                 targetDirectory = outputDirectory)
+                                 TargetDirectory = outputDirectory)
 ```
 The `sample.info` is a dataframe with two columns: the **primary** column indicates the sample identifiers and the **sample.type** column indicates which group each sample belongs to:
 
@@ -625,6 +625,9 @@ library(survminer)
 
 # Select the target CpG site whose methylation states will be evaluated
 Probe = "cg00909706"
+
+# If using data from TCGA, just input the cancer site 
+CancerSite = "LUAD"
 
 EpiMix_PlotSurvival(EpiMixResults = Sample_EpiMixResults_miRNA, 
                                      plot.probe = Probe,

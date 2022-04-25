@@ -10,17 +10,14 @@
 #' @return a dataframe with probes whose methylation state is predictive of patient survival and the p value.
 #' @export
 #' @examples
-#' \dontrun{
+#' {
 #' library(survival)
 #'
 #' data("Sample_EpiMixResults_miRNA")
 #'
-#' # Set the TCGA cancer site.
-#' CancerSite = "LUAD"
-#'
-#' # Find survival-associated CpGs/genes
 #' survival.CpGs <- get.survival.probe (EpiMixResults = Sample_EpiMixResults_miRNA,
-#'                                      TCGA_CancerSite = CancerSite)
+#'                                      TCGA_CancerSite = "LUAD")
+#'
 #' }
 #'
 
@@ -166,17 +163,15 @@ get.survival.probe <- function(EpiMixResults,
 #' @return Kaplan-meier survival curve showing the survival time for patients with different methylation states of the probe.
 #' @export
 #' @examples
-#' \dontrun{
+#' {
 #' library(survival)
 #' library(survminer)
 #'
-#' # Select the target CpG site whose methylation states will be evaluated
-#' Probe = "cg00909706"
+#' data(Sample_EpiMixResults_miRNA)
 #'
-#' # Generate the graph
 #' EpiMix_PlotSurvival(EpiMixResults = Sample_EpiMixResults_miRNA,
-#'                     plot.probe = Probe,
-#'                     TCGA_CancerSite = CancerSite)
+#'                     plot.probe = "cg00909706",
+#'                     TCGA_CancerSite = "LUAD")
 #' }
 #'
 

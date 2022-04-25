@@ -31,41 +31,20 @@ mode: when mode is set to "Regular", this function downloads the level 3 RNAseq 
 downloaded. If you plan to run the EpiMix on miRNA- or lncRNA-coding genes, please specify the "mode" parameter to "miRNA" or "lncRNA".
 }
 \examples{
-\dontrun{
+{
 # Example #1 : download regular gene expression data for ovarian cancer
-CancerSite <- "OV"
-mode <- "Regular"
-targetDirectory <- paste0(getwd(), "/Data")
-GEdirectories <- Download_GeneExpression(CancerSite,
-                                         targetDirectory,
-                                         mode = mode
-                                         )
-}
-\dontrun{
-# Example #2 : download miRNA gene expression data for ovarian cancer
-CancerSite <- "OV"
-mode <- "miRNA"
-targetDirectory <- paste0(getwd(), "/Data")
+GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
 
-# Download gene expression data
-GEdirectories <- Download_GeneExpression(CancerSite,
-                                         targetDirectory,
-                                         mode = mode
-                                         )
-}
-\dontrun{
-# Example #3 : download lncRNA gene expression data for ovarian cancer
-CancerSite <- "OV"
-mode <- "lncRNA"
-targetDirectory <- paste0(getwd(), "/Data")
+# Example #2 : download miRNA expression data for ovarian cancer
+GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+                                              TargetDirectory = tempdir(),
+                                              mode = "miRNA")
 
-# Download gene expression data
-GEdirectories <- Download_GeneExpression(CancerSite,
-                                         targetDirectory,
-                                         mode = mode
-                                         )
+# Example #3 : download lncRNA expression data for ovarian cancer
+# GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+#                                               TargetDirectory = tempdir(),
+#                                                mode = "lncRNA")
 }
-
 
 }
 \keyword{download}

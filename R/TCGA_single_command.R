@@ -122,7 +122,7 @@ TCGA_GetData <- function(CancerSite,
   # ---------------------------------------------------------------------------------------------
   # Step 3: Generate sample information
   # ---------------------------------------------------------------------------------------------
-  sample.info = TCGA_GetSampleInfo(METProcessedData, CancerSite = CancerSite, targetDirectory = outputDirectory)
+  sample.info = TCGA_GetSampleInfo(METProcessedData, CancerSite = CancerSite, TargetDirectory = outputDirectory)
 
   # ---------------------------------------------------------------------------------------------
   # Step 4: Run EpiMix

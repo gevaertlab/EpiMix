@@ -76,35 +76,18 @@ NULL
 #'
 #' @export
 #' @examples
-#' \dontrun{
-#' # Regular mode
-#' library(EpiMix)
+#' {
 #' data(MET.data)
 #' data(mRNA.data)
-#' data(sample.info)
+#' data(LUAD.sample.annotation)
+#'
 #' EpiMixResults_Regular <- EpiMix(methylation.data = MET.data,
 #'                                 gene.expression.data = mRNA.data,
-#'                                 sample.info = sample.info,
+#'                                 sample.info = LUAD.sample.annotation,
 #'                                 group.1 = "Cancer",
 #'                                 group.2 = "Normal",
-#'                                 met.platform = "HM450")
-#'}
-#' \dontrun{
-#' # Enhancer mode
-#' library(EpiMix)
-#' data(MET.data)
-#' data(mRNA.data)
-#' data(sample.info)
-#' mode = "Enhancer"
-#' roadmap.epigenome.ids = "E096"
-#' EpiMixResults_Enhancer <- EpiMix(methylation.data = MET.data,
-#'                                 gene.expression.data = mRNA.data,
-#'                                 sample.info = sample.info,
-#'                                 mode = mode,
-#'                                 group.1 = "Cancer",
-#'                                 group.2 = "Normal",
-#'                                 roadmap.epigenome.ids = roadmap.epigenome.ids,
-#'                                 met.platform = "HM450")
+#'                                 met.platform = "HM450",
+#'                                 OutputRoot = tempdir())
 #'}
 
 EpiMix <- function(methylation.data,

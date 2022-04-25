@@ -473,7 +473,7 @@ betaEst_2 <-function (Y, w, weights) {
 #' @import ggplot2
 #' @export
 #' @examples
-#' \dontrun{
+#' {
 #' data(MET.data)
 #' data(mRNA.data)
 #' data(Sample_EpiMixResults_Regular)

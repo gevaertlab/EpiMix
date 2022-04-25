@@ -64,4 +64,17 @@ The data preprocessing pipeline includes:
 (4) (optional) doing Batch correction.
 If both sample.info and group.1 and group.2 information are provided, the function will perform missing value estimation and batch correction on group.1 and group.2 separately. This will ensure that the true difference between group.1 and group.2 will not be obscured by missing value estimation and batch correction.
 }
+\examples{
+{
+data(MET.data)
+data(LUAD.sample.annotation)
+
+Preprocessed_Data <- GEO_Preprocess_DNAMethylation(MET.data,
+                                                   met.platform = "HM450",
+                                                   sample.info = LUAD.sample.annotation,
+                                                   group.1 = "Cancer",
+                                                   group.2 = "Normal")
+
+}
+}
 \keyword{preprocess}

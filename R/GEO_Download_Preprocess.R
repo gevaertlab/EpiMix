@@ -19,9 +19,9 @@ NULL
 #' @return a list with two elements. The first element ("$MethylationData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
 #' @export
 #' @keywords download
-#' @example
-#' \dontrun{
-#' METdirectories <- GEO_Download_DNAMethylation(AccessionID = "GSE114134", targetDirectory = tempdir())
+#' @examples
+#' {
+#' # METdirectories <- GEO_Download_DNAMethylation(AccessionID = "GSE114134", targetDirectory = tempdir())
 #' }
 
 GEO_Download_DNAMethylation <- function(AccessionID, targetDirectory = '.', DownloadData = TRUE) {
@@ -59,8 +59,8 @@ GEO_Download_DNAMethylation <- function(AccessionID, targetDirectory = '.', Down
 #' @return a list with two elements. The first element ("$GeneExpressionData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
 #' @export
 #' @keywords download
-#' @example
-#' \dontrun{
+#' @examples
+#' {
 #' GEdirectories <- GEO_Download_GeneExpression(AccessionID = "GSE114065", targetDirectory = tempdir())
 #' }
 
@@ -98,7 +98,7 @@ GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', Downl
 #' @param GEdirectories list of the file paths to the downloaded gene expression datasets, which can be the output from the GEO_Download_GeneExpression function.
 #' @param targetDirectory file path to save the output. Default: '.' (current directory)
 #' @return dataframe with three columns: $assay (character string indicating the type of the experiment, can be either "DNA methylation" or "Gene expression"), $primary(character string indicating the actual sample names), $colnames (character string indicating the actual column names for each samples in DNA methylation data and gene expression data)
-#' @export
+#' @keywords testing purpose
 
  GEO_getSampleMap <- function(METdirectories, GEdirectories, targetDirectory='.'){
 
@@ -130,7 +130,7 @@ GEO_Download_GeneExpression <- function(AccessionID,targetDirectory = '.', Downl
 #' @param group.column character string indicating the column in the phenotypic data that defines the study group of each sample. The values in this column will be used to split the experiment and the control group.
 #' @param targetDirectory file path to save the output. Default: '.' (current directory)
 #' @return a dataframe with two columns: a "primary" column indicating the actual sample names, a "sample.type" column indicating the study group for each sample.
-#' @export
+#' @keywords testing purpose
 
 GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = '.'){
   pData = METdirectories[[2]]
@@ -176,6 +176,18 @@ GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = '.
 #' @import doParallel
 #' @export
 #' @keywords preprocess
+#' @examples
+#' {
+#' data(MET.data)
+#' data(LUAD.sample.annotation)
+#'
+#' Preprocessed_Data <- GEO_Preprocess_DNAMethylation(MET.data,
+#'                                                    met.platform = "HM450",
+#'                                                    sample.info = LUAD.sample.annotation,
+#'                                                    group.1 = "Cancer",
+#'                                                    group.2 = "Normal")
+#'
+#' }
 
 GEO_Preprocess_DNAMethylation <- function(methylation.data,
                                           met.platform = "EPIC",
@@ -324,6 +336,15 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data,
 #' @return gene expression data matrix with genes in rows and samples in columns.
 #' @export
 #' @keywords preprocess
+#' @examples
+#' {
+#' data(mRNA.data)
+#' data(LUAD.sample.annotation)
+#' Preprocessed_Data <- GEO_Preprocess_GeneExpression(gene.expression.data = mRNA.data,
+#'                                                    sample.info = LUAD.sample.annotation,
+#'                                                    group.1 = "Cancer",
+#'                                                    group.2 = "Normal")
+#' }
 
 GEO_Preprocess_GeneExpression <- function(gene.expression.data,
                                           sample.info = NULL,

@@ -104,34 +104,17 @@ Available epigenome groups (a group of relevant cell types) or epigenome ids (in
 They can also be retrieved from the list.epigenomes() function. If both roadmap.epigenome.groups and roadmap.epigenome.ids are specified, EpiMix will select all the epigenomes from the combination of the inputs.
 }
 \examples{
-\dontrun{
-# Regular mode
-library(EpiMix)
+{
 data(MET.data)
 data(mRNA.data)
-data(sample.info)
+data(LUAD.sample.annotation)
+
 EpiMixResults_Regular <- EpiMix(methylation.data = MET.data,
                                 gene.expression.data = mRNA.data,
-                                sample.info = sample.info,
+                                sample.info = LUAD.sample.annotation,
                                 group.1 = "Cancer",
                                 group.2 = "Normal",
-                                met.platform = "HM450")
-}
-\dontrun{
-# Enhancer mode
-library(EpiMix)
-data(MET.data)
-data(mRNA.data)
-data(sample.info)
-mode = "Enhancer"
-roadmap.epigenome.ids = "E096"
-EpiMixResults_Enhancer <- EpiMix(methylation.data = MET.data,
-                                gene.expression.data = mRNA.data,
-                                sample.info = sample.info,
-                                mode = mode,
-                                group.1 = "Cancer",
-                                group.2 = "Normal",
-                                roadmap.epigenome.ids = roadmap.epigenome.ids,
-                                met.platform = "HM450")
+                                met.platform = "HM450",
+                                OutputRoot = tempdir())
 }
 }

@@ -54,4 +54,14 @@ The preprocessing pipeline includes:
 (3) mapping the column names of the gene expression data to the actual sample names based on the information from "sample.map".
 (4) doing batch correction.
 }
+\examples{
+{
+data(mRNA.data)
+data(LUAD.sample.annotation)
+Preprocessed_Data <- GEO_Preprocess_GeneExpression(gene.expression.data = mRNA.data,
+                                                   sample.info = LUAD.sample.annotation,
+                                                   group.1 = "Cancer",
+                                                   group.2 = "Normal")
+}
+}
 \keyword{preprocess}

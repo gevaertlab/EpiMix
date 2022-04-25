@@ -20,10 +20,8 @@ list with paths to downloaded files for both 27k and 450k methylation data.
 Download DNA methylation data from TCGA.
 }
 \examples{
-\dontrun{
-CancerSite <- "OV"
-targetDirctory <- paste0(getwd(), "/Data")
-METdirectories <- TCGA_Download_DNAmethylation(CancerSite, targetDirectory)
+{
+METdirectories <- TCGA_Download_DNAmethylation(CancerSit = "OV", TargetDirectory = tempdir())
 }
 
 }

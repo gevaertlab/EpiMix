@@ -36,17 +36,14 @@ a dataframe with probes whose methylation state is predictive of patient surviva
 Get probes whose methylation state is predictive of patient survival
 }
 \examples{
-\dontrun{
+{
 library(survival)
 
 data("Sample_EpiMixResults_miRNA")
 
-# Set the TCGA cancer site.
-CancerSite = "LUAD"
-
-# Find survival-associated CpGs/genes
 survival.CpGs <- get.survival.probe (EpiMixResults = Sample_EpiMixResults_miRNA,
-                                     TCGA_CancerSite = CancerSite)
+                                     TCGA_CancerSite = "LUAD")
+
 }
 
 }

@@ -23,4 +23,9 @@ a list with two elements. The first element ("$MethylationData") indicating the 
 \description{
 Download the methylation data and the associated sample phenotypic data from the GEO database.
 }
+\examples{
+{
+# METdirectories <- GEO_Download_DNAMethylation(AccessionID = "GSE114134", targetDirectory = tempdir())
+}
+}
 \keyword{download}

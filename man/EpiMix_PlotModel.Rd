@@ -51,7 +51,7 @@ Produce the mixture model and the gene expression plots representing the EpiMix 
 The violin plot and the scatter plot will be NULL if the gene expression data or the GeneName is not provided
 }
 \examples{
-\dontrun{
+{
 data(MET.data)
 data(mRNA.data)
 data(Sample_EpiMixResults_Regular)

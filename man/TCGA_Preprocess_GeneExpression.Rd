@@ -42,28 +42,34 @@ Pre-processes gene expression data from TCGA.
 Pre-process includes eliminating samples and genes with too many NAs, imputing NAs, and doing Batch correction. If the rownames of the gene expression data are ensembl ENSG names or ENST names, the function will convert them to the human gene symbol (HGNC).
 }
 \examples{
-\dontrun{
-# Preprocess the gene expression data of ovarian cancer for the use of Regular mode
-mode <- "Regular"
-targetDirectory <- paste0(getwd(), "/Data")
-GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
-GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
-}
-\dontrun{
-# Preprocess the gene expression data of ovarian cancer for the use of miRNA mode
-mode <- "miRNA"
-targetDirectory <- paste0(getwd(), "/Data")
-GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
-GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
-}
-\dontrun{
-# Preprocess the gene expression data of ovarian cancer for the use of lncRNA mode
-mode <- "lncRNA"
-targetDirectory <- paste0(getwd(), "/Data")
-GEdirectories <- TCGA_Download_GeneExpression(CancerSite, targetDirectory)
-GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite, GEdirectories, mode = mode)
-}
+{
 
+# Example #1: Preprocessing gene expression for Regular mode
+
+GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
+GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",  MAdirectories = GEdirectories)
+
+# Example #2: Preprocessing gene expression for miRNA mode
+
+GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+                                              TargetDirectory = tempdir(),
+                                              mode = "miRNA")
+
+# GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",
+#                                                    MAdirectories = GEdirectories,
+#                                                    mode = "miRNA")
+
+# Example #3: Preprocessing gene expression for lncRNA mode
+
+# GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+#                                               TargetDirectory = tempdir(),
+#                                               mode = "lncRNA")
+
+# GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",
+#                                                   MAdirectories = GEdirectories,
+#                                                   mode = "lncRNA")
+
+}
 
 }
 \keyword{preprocess}
