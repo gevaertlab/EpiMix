@@ -71,7 +71,7 @@ Available epigenome ids can be obtained from the Roadmap Epigenomic study (Natur
 They can also be retrieved from the list.epigenomes() function.
 }
 \examples{
-{
+\dontrun{
 library(karyoploteR)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(org.Hs.eg.db)

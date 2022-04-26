@@ -51,13 +51,13 @@ library(org.Hs.eg.db)
 
 data(Sample_EpiMixResults_Regular)
 
-# enrich.results <- function.enrich(
-#  EpiMixResults = Sample_EpiMixResults_Regular,
-#  enrich.method = "GO",
-#  ont = "BP",
-#  simplify = TRUE,
-#  save.dir = ""
-# )
+enrich.results <- function.enrich(
+ EpiMixResults = Sample_EpiMixResults_Regular,
+ enrich.method = "GO",
+ ont = "BP",
+ simplify = TRUE,
+ save.dir = ""
+)
 }
 
 }
