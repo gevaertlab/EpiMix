@@ -30,7 +30,7 @@
 #' They can also be retrieved from the list.epigenomes() function.
 #' @export
 #' @examples
-#' {
+#' \dontrun{
 #' library(karyoploteR)
 #' library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 #' library(org.Hs.eg.db)

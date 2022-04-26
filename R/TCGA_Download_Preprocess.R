@@ -220,10 +220,10 @@ get_firehoseData <- function(downloadData=TRUE,
 #' @export
 #' @keywords preprocess
 #' @examples
-#' {
+#' \dontrun{
 #' METdirectories <- TCGA_Download_DNAmethylation(CancerSite = "OV", TargetDirectory = tempdir())
-#' # METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite = "OV",
-#' #                                                    METdirectories = METdirectories)
+#' METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite = "OV",
+#'                                                    METdirectories = METdirectories)
 #' }
 
 TCGA_Preprocess_DNAmethylation <- function(CancerSite,
