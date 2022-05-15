@@ -19,6 +19,8 @@ EpiMix incorporates specialized algorithms to identify functional DNA methylatio
 
 EpiMix is also available as an interactive web tool: [https://epimix.stanford.edu](https://epimix.stanford.edu)
 
+<hr>
+
 ### Authors
 <hr>
 
