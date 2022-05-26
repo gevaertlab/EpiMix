@@ -184,7 +184,7 @@ MethylMix_ModelSingleGene <-function(GeneName, METdataVector, METdataNormalVecto
     }
     #cat(c(GeneName,": 1 component is best.\n"))
   } else {
-    for (comp in 1:NrComponents) {
+    for (comp in seq_len(NrComponents)) {
       METdataVector_comp = METdataVector[classification == comp]
       if (!is.null(METdataNormalVector)) {
         if (length(METdataVector_comp) > 0) res = wilcox.test(METdataVector_comp, METdataNormalVector) else res$p.value = 1
@@ -680,9 +680,9 @@ MethylMix_Predict <- function(newBetaValuesMatrix, MethylMixResult) {
 #' @return A matrix with predictions (indices of mixture component), driver genes in rows, new samples in columns
 #'
 predictOneGene <- function(newVector, mixtureModel) {
-  densities <- sapply(newVector, function(newObs) {
+  densities <- vapply(newVector, function(newObs) {
     mapply(dbeta, newObs, mixtureModel$a, mixtureModel$b) # density value in each mixture
-  })
+  }, FUN.VALUE = numeric(1))
   numerator <- apply(densities, 2, `*`, mixtureModel$eta)
   denominator <- colSums(numerator)
   posteriorProb <- apply(numerator, 1, function(x) x / denominator)

@@ -28,9 +28,9 @@ EpiMix_PlotGene(
 
 \item{EpiMixResults}{the resulting list object returned from the function of EpiMix.}
 
-\item{met.platform}{character string indicating the type of the microarray where the DNA methylation data were collected. The value should be either "HM27", "HM450" or "EPIC". Default: "HM450"}
+\item{met.platform}{character string indicating the type of the microarray where the DNA methylation data were collected. The value should be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'}
 
-\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: "E002"}
+\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'}
 
 \item{left.gene.margin}{numeric value indicating the number of extra nucleotide bases to be plotted on the left side of the target gene. Default: 10000.}
 
@@ -71,7 +71,7 @@ Available epigenome ids can be obtained from the Roadmap Epigenomic study (Natur
 They can also be retrieved from the list.epigenomes() function.
 }
 \examples{
-\dontrun{
+\donttest{
 library(karyoploteR)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(org.Hs.eg.db)
@@ -79,13 +79,13 @@ library(regioneR)
 
 data(Sample_EpiMixResults_Regular)
 
-gene.name = "CCND2"
+gene.name = 'CCND2'
 
-roadmap.epigenome.id = "E096"
+roadmap.epigenome.id = 'E096'
 
 EpiMix_PlotGene(gene.name = gene.name,
                 EpiMixResults = Sample_EpiMixResults_Regular,
-                met.platform = "HM450",
+                met.platform = 'HM450',
                 roadmap.epigenome.id = roadmap.epigenome.id)
 }
 

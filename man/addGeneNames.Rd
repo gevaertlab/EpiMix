@@ -9,7 +9,7 @@ addGeneNames(df_data, ProbeAnnotation)
 \arguments{
 \item{df_data}{a dataframe with a column named Probe}
 
-\item{ProbeAnnotation}{a dataframe with ProbeAnnotation, including one column named "probe" and another column named "gene"}
+\item{ProbeAnnotation}{a dataframe with ProbeAnnotation, including one column named 'probe' and another column named 'gene'}
 }
 \value{
 a dataframe with added gene names

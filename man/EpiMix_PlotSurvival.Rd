@@ -22,9 +22,9 @@ EpiMix_PlotSurvival(
 
 \item{plot.probe}{Character string with the name of the probe}
 
-\item{TCGA_CancerSite}{TCGA cancer code (e.g. "LUAD")}
+\item{TCGA_CancerSite}{TCGA cancer code (e.g. 'LUAD')}
 
-\item{clinical.df}{(If the TCGA_CancerSite parameter has been specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: "sample.id", "days_to_death", "days_to_last_follow_up".}
+\item{clinical.df}{(If the TCGA_CancerSite parameter has been specified, this parameter is optional) Dataframe with survival information. Must contain at least three columns: 'sample.id', 'days_to_death', 'days_to_last_follow_up'.}
 
 \item{font.legend}{numeric value indicating the font size of the figure legend. Default: 16}
 
@@ -34,7 +34,7 @@ EpiMix_PlotSurvival(
 
 \item{font.tickslab}{numeric value indicating the font size of the axis tick label. Default: 14}
 
-\item{legend}{numeric vector indicating the x,y coordinate for positioning the figure legend. c(0,0) indicates bottom left, while c(1,1) indicates top right. Default: c(0.8,0.9). If "none", legend will be removed.}
+\item{legend}{numeric vector indicating the x,y coordinate for positioning the figure legend. c(0,0) indicates bottom left, while c(1,1) indicates top right. Default: c(0.8,0.9). If 'none', legend will be removed.}
 
 \item{show.p.value}{logic indicating whether to show p value in the plot. P value was calculated by log-rank test.  Default: TRUE.}
 }
@@ -45,15 +45,15 @@ Kaplan-meier survival curve showing the survival time for patients with differen
 function to plot Kaplan-meier survival curves for patients with different methylation state of a specific probe.
 }
 \examples{
-{
+\donttest{
 library(survival)
 library(survminer)
 
 data(Sample_EpiMixResults_miRNA)
 
 EpiMix_PlotSurvival(EpiMixResults = Sample_EpiMixResults_miRNA,
-                    plot.probe = "cg00909706",
-                    TCGA_CancerSite = "LUAD")
+                    plot.probe = 'cg00909706',
+                    TCGA_CancerSite = 'LUAD')
 }
 
 }

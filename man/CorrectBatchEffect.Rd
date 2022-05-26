@@ -17,7 +17,7 @@ CorrectBatchEffect(
 
 \item{BatchData}{dataframe with two columns: the first column indicates the sample names, and the second column indicates the batch ids.}
 
-\item{batch.correction.method}{character string. Should be either "Seurat" or "Combat".}
+\item{batch.correction.method}{character string. Should be either 'Seurat' or 'Combat'.}
 
 \item{MinInBatch}{integer indicating the batch size threshold. Batches smaller than this threshold will be removed. Default: 5}
 
@@ -34,11 +34,5 @@ top-level wrapper function for batch correction.
 (2) removes extremely small batches.
 (3) if the molecular data have over 50,000 features (rows), it splits the data into subsets, with 50,000 features in each subset, and perform batch correction on each subset.
 (4) identify overlapped samples in batch corrected subsets, and merge the subsets into one matrix.
-}
-\examples{
-\dontrun{
-BatchData = readRDS("Annotation/TCGA_BatchData.rds")
-}
-
 }
 \keyword{internal}

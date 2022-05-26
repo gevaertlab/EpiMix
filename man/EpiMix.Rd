@@ -33,10 +33,10 @@ EpiMix(
 \item{gene.expression.data}{Matrix of the gene expression data with genes in rows and samples in columns.}
 
 \item{mode}{Character string indicating the analytic mode to model DNA methylation.
-Should be one of the followings: "Regular", "Enhancer", "miRNA" or "lncRNA". Default: "Regular". See details for more information.}
+Should be one of the followings: 'Regular', 'Enhancer', 'miRNA' or 'lncRNA'. Default: 'Regular'. See details for more information.}
 
 \item{sample.info}{Dataframe that maps each sample to a study group.
-Should contain two columns: the first column (named "primary") indicates the sample names, and the second column (named "sample.type") indicating which study group each sample belongs to (e.g.,“Cancer” vs. “Normal”,  “Experiment” vs. “Control”). Sample names in the "primary" column must coincide with the column names of the methylation.data.}
+Should contain two columns: the first column (named 'primary') indicates the sample names, and the second column (named 'sample.type') indicating which study group each sample belongs to (e.g.,“Cancer” vs. “Normal”,  “Experiment” vs. “Control”). Sample names in the 'primary' column must coincide with the column names of the methylation.data.}
 
 \item{group.1}{Character vector indicating the name(s) for the experiment group.}
 
@@ -44,9 +44,9 @@ Should contain two columns: the first column (named "primary") indicates the sam
 
 \item{promoters}{Logic indicating whether to focus the analysis on CpGs associated with promoters (2000 bp upstream and 1000 bp downstream of the transcription start site). This parameter is only used for the Regular mode.}
 
-\item{met.platform}{Character string indicating the microarray type for collecting the DNA methylation data. The value should be either "HM27", "HM450" or "EPIC". Default: "HM450"}
+\item{met.platform}{Character string indicating the microarray type for collecting the DNA methylation data. The value should be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'}
 
-\item{genome}{Character string indicating the genome build version to be used for CpG annotation. Should be either "hg19" or "hg38". Default: "hg38".}
+\item{genome}{Character string indicating the genome build version to be used for CpG annotation. Should be either 'hg19' or 'hg38'. Default: 'hg38'.}
 
 \item{listOfGenes}{Character vector used for filtering the genes to be evaluated.}
 
@@ -56,11 +56,11 @@ Should contain two columns: the first column (named "primary") indicates the sam
 
 \item{numFlankingGenes}{Numeric value indicating the number of flanking genes whose expression is to be evaluated for selecting the functional enhancers. Default: 20.}
 
-\item{roadmap.epigenome.groups}{(parameter used for the "Enhancer" mode) Character vector indicating the tissue group(s) to be used for selecting the enhancers. See details for more information. Default: NULL.}
+\item{roadmap.epigenome.groups}{(parameter used for the 'Enhancer' mode) Character vector indicating the tissue group(s) to be used for selecting the enhancers. See details for more information. Default: NULL.}
 
-\item{roadmap.epigenome.ids}{(parameter used for the "Enhancer" mode) Character vector indicating the epigenome ID(s) to be used for selecting the enhancers. See details for more information. Default: NULL.}
+\item{roadmap.epigenome.ids}{(parameter used for the 'Enhancer' mode) Character vector indicating the epigenome ID(s) to be used for selecting the enhancers. See details for more information. Default: NULL.}
 
-\item{chromatin.states}{(parameter used for the "Enhancer" mode) Character vector indicating the chromatin states to be used for selecting the enhancers. To get the available chromatin states, please run the list.chromatin.states() function. Default: c("EnhA1", "EnhA2", "EnhG1", "EnhG2").}
+\item{chromatin.states}{(parameter used for the 'Enhancer' mode) Character vector indicating the chromatin states to be used for selecting the enhancers. To get the available chromatin states, please run the list.chromatin.states() function. Default: c('EnhA1', 'EnhA2', 'EnhG1', 'EnhG2').}
 
 \item{NoNormalMode}{Logical indicating if the methylation states found in the experiment group should be compared to the control group. Default: FALSE.}
 
@@ -68,7 +68,7 @@ Should contain two columns: the first column (named "primary") indicates the sam
 
 \item{MixtureModelResults}{Pre-computed EpiMix results, used for generating functional probe-gene pair matrix. Default: NULL}
 
-\item{OutputRoot}{File path to store the EpiMix result object. Default: "." (current directory)}
+\item{OutputRoot}{File path to store the EpiMix result object. Default: '.' (current directory)}
 }
 \value{
 The results from EpiMix is a list with the following components:
@@ -104,17 +104,51 @@ Available epigenome groups (a group of relevant cell types) or epigenome ids (in
 They can also be retrieved from the list.epigenomes() function. If both roadmap.epigenome.groups and roadmap.epigenome.ids are specified, EpiMix will select all the epigenomes from the combination of the inputs.
 }
 \examples{
-{
+\donttest{
 data(MET.data)
 data(mRNA.data)
+data(microRNA.data)
+data(lncRNA.data)
 data(LUAD.sample.annotation)
 
-EpiMixResults_Regular <- EpiMix(methylation.data = MET.data,
-                                gene.expression.data = mRNA.data,
-                                sample.info = LUAD.sample.annotation,
-                                group.1 = "Cancer",
-                                group.2 = "Normal",
-                                met.platform = "HM450",
-                                OutputRoot = tempdir())
+# Example #1: Regular mode
+EpiMixResults <- EpiMix(methylation.data = MET.data,
+                        gene.expression.data = mRNA.data,
+                        sample.info = LUAD.sample.annotation,
+                        group.1 = 'Cancer',
+                        group.2 = 'Normal',
+                        met.platform = 'HM450',
+                        OutputRoot = tempdir())
+
+# Example #2: Enhancer mode
+EpiMixResults <- EpiMix(methylation.data = MET.data,
+                       gene.expression.data = mRNA.data,
+                       sample.info = LUAD.sample.annotation,
+                       mode = 'Enhancer',
+                       group.1 = 'Cancer',
+                       group.2 = 'Normal',
+                       met.platform = 'HM450',
+                       roadmap.epigenome.ids = 'E096',
+                       OutputRoot = tempdir())
+
+# Example #3: miRNA mode
+EpiMixResults <- EpiMix(methylation.data = MET.data,
+                       gene.expression.data = microRNA.data,
+                       sample.info = LUAD.sample.annotation,
+                       mode = 'miRNA',
+                       group.1 = 'Cancer',
+                       group.2 = 'Normal',
+                       met.platform = 'HM450',
+                       OutputRoot = tempdir())
+
+# Example #4: lncRNA mode
+EpiMixResults <- EpiMix(methylation.data = MET.data,
+                       gene.expression.data = lncRNA.data,
+                       sample.info = LUAD.sample.annotation,
+                       mode = 'lncRNA',
+                       group.1 = 'Cancer',
+                       group.2 = 'Normal',
+                       met.platform = 'HM450',
+                       OutputRoot = tempdir())
 }
 }

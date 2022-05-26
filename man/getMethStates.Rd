@@ -12,7 +12,7 @@ getMethStates(MethylMixResults, DM.probes)
 \item{DM.probes}{character vector of differentially methylated probes.}
 }
 \value{
-a character vector with the methylation state ("Hypo", "Hyper" or "Dual") for each probe. The names for the vector are the probe names and the values are the methylation state.
+a character vector with the methylation state ('Hypo', 'Hyper' or 'Dual') for each probe. The names for the vector are the probe names and the values are the methylation state.
 }
 \description{
 Helper function that adds a methyaltion state label to each driver probe

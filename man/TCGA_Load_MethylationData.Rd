@@ -9,7 +9,7 @@ TCGA_Load_MethylationData(METdirectory, ArrayType)
 \arguments{
 \item{METdirectory}{path to the 27K or 450K data}
 
-\item{ArrayType}{character string indicating the array type, can be either "27K" or "450K"}
+\item{ArrayType}{character string indicating the array type, can be either '27K' or '450K'}
 }
 \value{
 matrix of methylation data with probes in rows and patient in columns

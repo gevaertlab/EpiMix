@@ -14,7 +14,7 @@ GEO_GetSampleInfo(METdirectories, group.column, targetDirectory = ".")
 \item{targetDirectory}{file path to save the output. Default: '.' (current directory)}
 }
 \value{
-a dataframe with two columns: a "primary" column indicating the actual sample names, a "sample.type" column indicating the study group for each sample.
+a dataframe with two columns: a 'primary' column indicating the actual sample names, a 'sample.type' column indicating the study group for each sample.
 }
 \description{
 auxiliary function to generate a sample information dataframe that indicates which study group each sample belongs to.

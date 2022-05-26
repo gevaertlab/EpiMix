@@ -18,14 +18,15 @@ GEO_Download_DNAMethylation(
 \item{DownloadData}{logical indicating whether the actual data should be downloaded (Default: TRUE). If False, the desired directory where the downloaded data should have been saved is returned.}
 }
 \value{
-a list with two elements. The first element ("$MethylationData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
+a list with two elements. The first element ('$MethylationData') indicating the file path to the downloaded methylation data. The second element ('$PhenotypicData') indicating the file path to the sample phenotypic data.
 }
 \description{
 Download the methylation data and the associated sample phenotypic data from the GEO database.
 }
 \examples{
-{
-# METdirectories <- GEO_Download_DNAMethylation(AccessionID = "GSE114134", targetDirectory = tempdir())
+\donttest{
+METdirectories <- GEO_Download_DNAMethylation(AccessionID = 'GSE114134',
+                                              targetDirectory = tempdir())
 }
 }
 \keyword{download}

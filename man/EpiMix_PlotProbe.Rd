@@ -29,9 +29,9 @@ EpiMix_PlotProbe(
 
 \item{EpiMixResults}{resulting list object returned from EpiMix.}
 
-\item{met.platform}{character string indicating the type of micro-array where the DNA methylation data were collected.Can be either "HM27", "HM450" or "EPIC". Default: "HM450"}
+\item{met.platform}{character string indicating the type of micro-array where the DNA methylation data were collected.Can be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'}
 
-\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: "E002"}
+\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'}
 
 \item{numFlankingGenes}{numeric value indicating the number of flanking genes to be plotted with the CpG probe. Default: 20 (10 gene upstream and 10 gene downstream).}
 
@@ -47,7 +47,7 @@ EpiMix_PlotProbe(
 
 \item{gene.line.width}{numeric value indicating the line width for the genes.}
 
-\item{plot.chromatin.state}{logical indicating whether to plot the DNase-seq and histone ChIP-seq signals. Warnings: If the "numFlankingGenes" is a larger than 15, plotting the chromatin state may flood the internal memory.}
+\item{plot.chromatin.state}{logical indicating whether to plot the DNase-seq and histone ChIP-seq signals. Warnings: If the 'numFlankingGenes' is a larger than 15, plotting the chromatin state may flood the internal memory.}
 
 \item{y.label.font}{font size of the y axis label.}
 
@@ -74,7 +74,7 @@ Available epigenome ids can be obtained from the Roadmap Epigenomic study (Natur
 They can also be retrieved from the list.epigenomes() function.
 }
 \examples{
-\dontrun{
+\donttest{
 library(karyoploteR)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(org.Hs.eg.db)
@@ -83,18 +83,18 @@ library(regioneR)
 data(Sample_EpiMixResults_Regular)
 
 # The CpG site to plot
-probe.name = "cg00374492"
+probe.name = 'cg00374492'
 
 # The number of adjacent genes to be plotted
 numFlankingGenes = 10
 
 # Set up the reference cell/tissue type
-roadmap.epigenome.id = "E096"
+roadmap.epigenome.id = 'E096'
 
 # Generate the plot
 EpiMix_PlotProbe(probe.name = probe.name,
                  EpiMixResults = Sample_EpiMixResults_Regular,
-                 met.platform = "HM450",
+                 met.platform = 'HM450',
                  roadmap.epigenome.id = roadmap.epigenome.id,
                  numFlankingGenes = numFlankingGenes)
 

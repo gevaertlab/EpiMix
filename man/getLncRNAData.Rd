@@ -15,3 +15,4 @@ local file path where the lncRNA expression data are saved
 \description{
 Helper function to retrieve the lncRNA expression data from Experiment Hub
 }
+\keyword{internal}

@@ -21,11 +21,11 @@ GEO_Preprocess_GeneExpression(
 \arguments{
 \item{gene.expression.data}{a matrix of gene expression data with gene in rows and samples in columns.}
 
-\item{sample.info}{dataframe that maps each sample to a study group. Should contain two columns: the first column (named: "primary") indicating the sample names, and the second column (named: "sample.type") indicating which study group each sample belongs to (e.g., “Experiment” vs. “Control”,  “Cancer” vs. “Normal”). Sample names in the "primary" column must coincide with the column names of the methylation.data. Please see details for more information. Default: NULL.}
+\item{sample.info}{dataframe that maps each sample to a study group. Should contain two columns: the first column (named: 'primary') indicating the sample names, and the second column (named: 'sample.type') indicating which study group each sample belongs to (e.g., “Experiment” vs. “Control”,  “Cancer” vs. “Normal”). Sample names in the 'primary' column must coincide with the column names of the methylation.data. Please see details for more information. Default: NULL.}
 
-\item{group.1}{character vector indicating the name(s) for the experiment group. The values must coincide with the values in the "sample.type" of the sample.info dataframe.Please see details for more information. Default: NULL.}
+\item{group.1}{character vector indicating the name(s) for the experiment group. The values must coincide with the values in the 'sample.type' of the sample.info dataframe.Please see details for more information. Default: NULL.}
 
-\item{group.2}{character vector indicating the names(s) for the control group. The values must coincide with the values in the "sample.type" of the sample.info dataframe. Please see details for more information. Default: NULL.}
+\item{group.2}{character vector indicating the names(s) for the control group. The values must coincide with the values in the 'sample.type' of the sample.info dataframe. Please see details for more information. Default: NULL.}
 
 \item{sample.map}{dataframe for mapping the GEO accession ID (column names) to the actual sample names. Can be the output from the GEO_getSampleMap function. Default: NULL.}
 
@@ -35,9 +35,9 @@ GEO_Preprocess_GeneExpression(
 
 \item{doBatchCorrection}{logical indicating whether to perform batch correction. If TRUE, the batch data need to be provided.}
 
-\item{BatchData}{dataframe with batch information. Should contain two columns: the first column indicating the actual sample names, the second column indicating the batch. Users are expected to retrieve the batch information from GEO on their own, but this can also be done using the GEO_getSampleInfo function with the "group.column" as the column indicating the batch for each sample. Defualt": NULL.}
+\item{BatchData}{dataframe with batch information. Should contain two columns: the first column indicating the actual sample names, the second column indicating the batch. Users are expected to retrieve the batch information from GEO on their own, but this can also be done using the GEO_getSampleInfo function with the 'group.column' as the column indicating the batch for each sample. Defualt': NULL.}
 
-\item{batch.correction.method}{character string indicating the method that be used for batch correction. Should be either "Seurat" or "Combat". Default: "Seurat".}
+\item{batch.correction.method}{character string indicating the method that be used for batch correction. Should be either 'Seurat' or 'Combat'. Default: 'Seurat'.}
 
 \item{cores}{number of CPU cores to be used for batch effect correction. Default: 1}
 }
@@ -51,7 +51,7 @@ Preprocess the gene expression data from the GEO database.
 The preprocessing pipeline includes:
 (1) eliminating samples and genes with too many NAs and imputing NAs.
 (2) if the gene names (rownames) in the gene expression data are ensembl_gene_ids or ensembl_transcript_ids, translate the gene names or the transcript names to human gene symbols (HGNC).
-(3) mapping the column names of the gene expression data to the actual sample names based on the information from "sample.map".
+(3) mapping the column names of the gene expression data to the actual sample names based on the information from 'sample.map'.
 (4) doing batch correction.
 }
 \examples{
@@ -60,8 +60,8 @@ data(mRNA.data)
 data(LUAD.sample.annotation)
 Preprocessed_Data <- GEO_Preprocess_GeneExpression(gene.expression.data = mRNA.data,
                                                    sample.info = LUAD.sample.annotation,
-                                                   group.1 = "Cancer",
-                                                   group.2 = "Normal")
+                                                   group.1 = 'Cancer',
+                                                   group.2 = 'Normal')
 }
 }
 \keyword{preprocess}

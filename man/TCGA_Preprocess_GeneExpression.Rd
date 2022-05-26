@@ -20,11 +20,11 @@ TCGA_Preprocess_GeneExpression(
 
 \item{MAdirectories}{character vector with directories with the downloaded data. It can be the object returned by the GEO_Download_GeneExpression function.}
 
-\item{mode}{character string indicating whether the genes in the gene expression data are miRNAs or lncRNAs. Should be either "Regular", "Enhancer", "miRNA" or "lncRNA". This value should be consistent with the same parameter in the TCGA_Download_GeneExpression function. Default: "Regular".}
+\item{mode}{character string indicating whether the genes in the gene expression data are miRNAs or lncRNAs. Should be either 'Regular', 'Enhancer', 'miRNA' or 'lncRNA'. This value should be consistent with the same parameter in the TCGA_Download_GeneExpression function. Default: 'Regular'.}
 
 \item{doBatchCorrection}{logical indicating whether to perform batch effect correction. Default: False.}
 
-\item{batch.correction.method}{character string indicating the method to perform batch correction. The value should be either "Seurat" or "Combat". Default: "Seurat". Seurat is much fatster than the Combat.}
+\item{batch.correction.method}{character string indicating the method to perform batch correction. The value should be either 'Seurat' or 'Combat'. Default: 'Seurat'. Seurat is much fatster than the Combat.}
 
 \item{MissingValueThresholdGene}{threshold for missing values per gene. Genes with a percentage of NAs greater than this threshold are removed. Default is 0.3.}
 
@@ -42,32 +42,32 @@ Pre-processes gene expression data from TCGA.
 Pre-process includes eliminating samples and genes with too many NAs, imputing NAs, and doing Batch correction. If the rownames of the gene expression data are ensembl ENSG names or ENST names, the function will convert them to the human gene symbol (HGNC).
 }
 \examples{
-{
+\donttest{
 
 # Example #1: Preprocessing gene expression for Regular mode
 
-# GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
-# GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",  MAdirectories = GEdirectories)
+ GEdirectories <- TCGA_Download_GeneExpression(CancerSite = 'OV', TargetDirectory = tempdir())
+ GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = 'OV',  MAdirectories = GEdirectories)
 
 # Example #2: Preprocessing gene expression for miRNA mode
 
-# GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
-#                                               TargetDirectory = tempdir(),
-#                                               mode = "miRNA")
+ GEdirectories <- TCGA_Download_GeneExpression(CancerSite = 'OV',
+                                               TargetDirectory = tempdir(),
+                                               mode = 'miRNA')
 
-# GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",
-#                                                    MAdirectories = GEdirectories,
-#                                                    mode = "miRNA")
+ GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = 'OV',
+                                                   MAdirectories = GEdirectories,
+                                                   mode = 'miRNA')
 
 # Example #3: Preprocessing gene expression for lncRNA mode
 
-# GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
-#                                               TargetDirectory = tempdir(),
-#                                               mode = "lncRNA")
+ GEdirectories <- TCGA_Download_GeneExpression(CancerSite = 'OV',
+                                               TargetDirectory = tempdir(),
+                                               mode = 'lncRNA')
 
-# GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV",
-#                                                   MAdirectories = GEdirectories,
-#                                                   mode = "lncRNA")
+ GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = 'OV',
+                                                   MAdirectories = GEdirectories,
+                                                   mode = 'lncRNA')
 
 }
 

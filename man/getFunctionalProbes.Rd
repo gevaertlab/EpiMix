@@ -23,7 +23,7 @@ getFunctionalProbes(
 
 \item{gene.expression.data}{gene expression data matrix.}
 
-\item{correlation}{character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".}
+\item{correlation}{character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either 'negative' or 'positive'.}
 
 \item{raw.pvalue.threshold}{raw p value from testing DNA methylation and gene expression}
 

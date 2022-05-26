@@ -7,7 +7,7 @@
 get.comparators(state)
 }
 \arguments{
-\item{state}{the methylation state of a CpG site. Can be either "Hyper", "Hypo" or "Dual".}
+\item{state}{the methylation state of a CpG site. Can be either 'Hyper', 'Hypo' or 'Dual'.}
 }
 \value{
 a string indicating the comparisions for gene expression.

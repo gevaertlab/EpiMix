@@ -10,7 +10,7 @@ mapTranscriptToGene(transcripts)
 \item{transcripts}{vector with the name of miRNA precursors}
 }
 \value{
-a dataframe with two columns: "Transcript" indicating the miRNA precursor names, "Gene_name" indicating the actual human gene names (HGNC)
+a dataframe with two columns: 'Transcript' indicating the miRNA precursor names, 'Gene_name' indicating the actual human gene names (HGNC)
 }
 \description{
 map the miRNA precursor names to HGNC

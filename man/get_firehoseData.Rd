@@ -24,13 +24,13 @@ get_firehoseData(
 
 \item{TCGA_acronym_uppercase}{TCGA's cancer site code.}
 
-\item{dataType}{type of data in TCGA (default: "stddata").}
+\item{dataType}{type of data in TCGA (default: 'stddata').}
 
 \item{dataFileTag}{name of the file to be downloaded (the default is to download RNAseq data, but this can be changed to download other data).}
 
 \item{FFPE}{logical indicating if FFPE data should be downloaded (default: FALSE).}
 
-\item{fileType}{type of downloaded file (default: "fileType", other type not admitted at the moment).}
+\item{fileType}{type of downloaded file (default: 'fileType', other type not admitted at the moment).}
 
 \item{gdacURL}{gdac url.}
 

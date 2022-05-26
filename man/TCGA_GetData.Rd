@@ -12,23 +12,26 @@ TCGA_GetData(
   batch.correction.method = "Seurat",
   roadmap.epigenome.ids = NULL,
   roadmap.epigenome.groups = NULL,
+  forceUse450K = FALSE,
   cores = 1
 )
 }
 \arguments{
 \item{CancerSite}{character string indicating the TCGA cancer code. The information can be found at: https://gdc.cancer.gov/resources-tcga-users/tcga-code-tables/tcga-study-abbreviations}
 
-\item{mode}{character string indicating the analytic mode to model DNA methylation. Should be one of the followings: "Regular", "Enhancer", "miRNA" or "lncRNA". Default: "Regular". See details for more information.}
+\item{mode}{character string indicating the analytic mode to model DNA methylation. Should be one of the followings: 'Regular', 'Enhancer', 'miRNA' or 'lncRNA'. Default: 'Regular'. See details for more information.}
 
 \item{outputDirectory}{character string indicating the file path to save the output.}
 
 \item{doBatchCorrection}{logical indicating whether to do batch effect correction during preprocessing. Default: False.}
 
-\item{batch.correction.method}{character string indicating the method to perform batch effect correction. The value should be either "Seurat" or "Combat". Seurat is much fatster than the Combat. Default: "Seurat".}
+\item{batch.correction.method}{character string indicating the method to perform batch effect correction. The value should be either 'Seurat' or 'Combat'. Seurat is much fatster than the Combat. Default: 'Seurat'.}
 
 \item{roadmap.epigenome.ids}{character vector indicating the epigenome ID(s) to be used for selecting enhancers. See details for more information. Default: NULL.}
 
 \item{roadmap.epigenome.groups}{character vector indicating the tissue group(s) to be used for selecting enhancers. See details for more information. Default: NULL.}
+
+\item{forceUse450K}{logic indicating whether force to use only 450K methylation data. Default: FALSE}
 
 \item{cores}{Number of CPU cores to be used for computation.}
 }
@@ -66,40 +69,30 @@ Available epigenome groups (a group of relevant cell types) or epigenome ids (in
 They can also be retrieved from the list.epigenomes() function. If both roadmap.epigenome.groups and roadmap.epigenome.ids are specified, EpiMix will select all the epigenomes from the combination of the inputs.
 }
 \examples{
-\dontrun{
+\donttest{
 # Example #1 - Regular mode
-CancerSite <- "OV"
-mode <- "Regular"
-outputDirectory <- paste0(getwd(), "/")
-EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
-                              mode = mode,
-                              outputDirectory = outputDirectory)
+EpiMixResults <- TCGA_GetData(CancerSite = 'LUAD',
+                              outputDirectory = tempdir(),
+                              cores = 8)
 
 # Example #2 - Enhancer mode
-CancerSite <- "OV"
-mode <- "Enhancer"
-outputDirectory <- paste0(getwd(), "/")
-roadmap.epigenome.ids = "E097"
-EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
-                              mode = mode,
-                              roadmap.epigenome.ids = roadmap.epigenome.ids,
-                              outputDirectory = outputDirectory)
+EpiMixResults <- TCGA_GetData(CancerSite = 'LUAD',
+                              mode =  'Enhancer',
+                              roadmap.epigenome.ids = 'E097',
+                              outputDirectory = tempdir(),
+                              cores = 8)
 
 Example #3 - miRNA mode
-CancerSite <- "OV"
-mode <- "miRNA"
-outputDirectory <- paste0(getwd(), "/")
-EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
-                              mode = mode,
-                              outputDirectory = outputDirectory)
+EpiMixResults <- TCGA_GetData(CancerSite = 'LUAD',
+                              mode = 'miRNA',
+                              outputDirectory = tempdir(),
+                              cores = 8)
 
 #' Example #4 - lncRNA mode
-CancerSite <- "OV"
-mode <- "lncRNA"
-outputDirectory <- paste0(getwd(), "/")
-EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
-                              mode = mode,
-                              outputDirectory = outputDirectory)
+EpiMixResults <- TCGA_GetData(CancerSite = 'LUAD',
+                              mode = 'lncRNA',
+                              outputDirectory = tempdir(),
+                              cores = 8)
 
 }
 

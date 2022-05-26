@@ -13,11 +13,11 @@ getRoadMapEnhancerProbes(
 )
 }
 \arguments{
-\item{met.platform}{character string indicating the methylation platform, can be either "EPIC" or "HM450"}
+\item{met.platform}{character string indicating the methylation platform, can be either 'EPIC' or 'HM450'}
 
-\item{genome}{character string indicating the genome build version, can be either "hg19" or "hg38"}
+\item{genome}{character string indicating the genome build version, can be either 'hg19' or 'hg38'}
 
-\item{functional.regions}{character vector indicating the MNEMONIC chromatin states that will be retrieved from the Roadmap epigenomics. Default values are the active enhancers:"EnhA1", "EnhA2".}
+\item{functional.regions}{character vector indicating the MNEMONIC chromatin states that will be retrieved from the Roadmap epigenomics. Default values are the active enhancers:'EnhA1', 'EnhA2'.}
 
 \item{listOfEpigenomes}{character vector indicting which epigenome(s) to use for finding enhancers.}
 
@@ -33,11 +33,11 @@ getRoadMapEnhancerProbes
 get the CpG probes that locate at the enhancer regions identified by the Roadmap epigenomics project
 }
 \examples{
-\dontrun{
-met.platform = "EPIC"
-genome = "hg38"
-listOfEpigenomes = c("E034", "E045", "E047")
-functional.regions = c("EnhA1", "EnhA2", "EnhG1", "EnhG2")
+\donttest{
+met.platform = 'EPIC'
+genome = 'hg38'
+listOfEpigenomes = c('E034', 'E045', 'E047')
+functional.regions = c('EnhA1', 'EnhA2', 'EnhG1', 'EnhG2')
 df.enhancer.probes <-  getEnhancerProbes(met.platform = met.platform,
                                         genome = genome,
                                         functional.regions = functional.regions,

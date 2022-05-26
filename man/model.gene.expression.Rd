@@ -22,7 +22,7 @@ model.gene.expression(
 
 \item{target.genes}{character vector with the names of the genes associated with the target CpGs.}
 
-\item{correlation}{character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either "negative" or "positive".}
+\item{correlation}{character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either 'negative' or 'positive'.}
 
 \item{calculate.fold.change}{logic indicating whether to calculate fold change between different mixtures}
 }

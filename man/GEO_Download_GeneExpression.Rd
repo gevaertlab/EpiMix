@@ -18,14 +18,15 @@ GEO_Download_GeneExpression(
 \item{DownloadData}{logical indicating whether the actual data should be downloaded (Default: TRUE). If False, the desired directory where the downloaded data should have been saved is returned.}
 }
 \value{
-a list with two elements. The first element ("$GeneExpressionData") indicating the file path to the downloaded methylation data. The second element ("$PhenotypicData") indicating the file path to the sample phenotypic data.
+a list with two elements. The first element ('$GeneExpressionData') indicating the file path to the downloaded methylation data. The second element ('$PhenotypicData') indicating the file path to the sample phenotypic data.
 }
 \description{
 Download the gene expression data and the associated sample phenotypic data from the GEO database.
 }
 \examples{
 {
-GEdirectories <- GEO_Download_GeneExpression(AccessionID = "GSE114065", targetDirectory = tempdir())
+GEdirectories <- GEO_Download_GeneExpression(AccessionID = 'GSE114065',
+                                             targetDirectory = tempdir())
 }
 }
 \keyword{download}

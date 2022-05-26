@@ -9,7 +9,7 @@ get.chromosome(genes, genome)
 \arguments{
 \item{genes}{character vector with the gene names}
 
-\item{genome}{character string indicating the genome build version, can be either "hg19" or "hg38"}
+\item{genome}{character string indicating the genome build version, can be either 'hg19' or 'hg38'}
 }
 \value{
 a dataframe for the mapping between genes and their chromosomes.

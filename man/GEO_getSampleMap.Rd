@@ -14,7 +14,7 @@ GEO_getSampleMap(METdirectories, GEdirectories, targetDirectory = ".")
 \item{targetDirectory}{file path to save the output. Default: '.' (current directory)}
 }
 \value{
-dataframe with three columns: $assay (character string indicating the type of the experiment, can be either "DNA methylation" or "Gene expression"), $primary(character string indicating the actual sample names), $colnames (character string indicating the actual column names for each samples in DNA methylation data and gene expression data)
+dataframe with three columns: $assay (character string indicating the type of the experiment, can be either 'DNA methylation' or 'Gene expression'), $primary(character string indicating the actual sample names), $colnames (character string indicating the actual column names for each samples in DNA methylation data and gene expression data)
 }
 \description{
 auxiliary function to generate a sample map for DNA methylation data and gene expression data

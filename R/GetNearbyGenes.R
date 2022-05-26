@@ -127,7 +127,8 @@ NearGenes <- function (Target = NULL,
     Whole <- c(Left,Right)
     GeneIDs <- Gene$GENEID[Whole]
     Symbols <- Gene$SYMBOL[Whole]
-    Distances <-  suppressWarnings(distance(Gene[Whole],regionInfo))
+    #Distances <-  suppressWarnings(distance(Gene[Whole],regionInfo))
+    Distances <-  distance(Gene[Whole],regionInfo)
     if(Rightlimit < 1){
       Sides <- paste0("L",length(Left):1)
     } else if( Leftlimit < 1){
@@ -314,13 +315,15 @@ calcDistNearestTSS <- function(
 
   merged <- dplyr::left_join(
     links,
-    suppressWarnings(tibble::as_tibble(tssAnnot)),
+    tibble::as_tibble(tssAnnot),
+    #suppressWarnings(tibble::as_tibble(tssAnnot)),
     by = c("ensembl_gene_id")
   )
 
   merged <- dplyr::left_join(
     merged,
-    suppressWarnings(tibble::as_tibble(TRange)),
+    #suppressWarnings(tibble::as_tibble(TRange)),
+    tibble::as_tibble(TRange),
     by = c("ID")
   )
 
@@ -410,25 +413,24 @@ getRegionNearGenes <- function(TRange = NULL,
             geneAnnot,
             select = "all",
             ignore.strand = TRUE)
-  idx <- suppressWarnings(tibble::as_tibble(nearest.idx))
+  idx <- tibble::as_tibble(nearest.idx)
   evaluating <- idx$queryHits
-  suppressWarnings({
-    ret <-
-      cbind(
-        suppressWarnings(tibble::as_tibble(geneAnnot[idx$subjectHits])),
-        tibble::tibble(
-          "ID" = names(TRange)[idx$queryHits],
-          "Distance" = distance(TRange[idx$queryHits],
-                                geneAnnot[idx$subjectHits], select = "all", ignore.strand = TRUE) *
-            ifelse(start(TRange[evaluating]) < start(geneAnnot[idx$subjectHits]), 1,-1)
+  ret <-
+    cbind(
+      tibble::as_tibble(geneAnnot[idx$subjectHits]),
+      #suppressWarnings(tibble::as_tibble(geneAnnot[idx$subjectHits])),
+      tibble::tibble(
+        "ID" = names(TRange)[idx$queryHits],
+        "Distance" = distance(TRange[idx$queryHits],
+                              geneAnnot[idx$subjectHits], select = "all", ignore.strand = TRUE) *
+          ifelse(start(TRange[evaluating]) < start(geneAnnot[idx$subjectHits]), 1,-1)
 
-        )
       )
-  })
+    )
   for (i in 1:(numFlankingGenes)) {
     idx <-
       unique(rbind(
-        suppressWarnings(tibble::as_tibble(
+      tibble::as_tibble(
           findOverlaps(
             geneAnnot[idx$subjectHits],
             geneAnnot,
@@ -436,15 +438,15 @@ getRegionNearGenes <- function(TRange = NULL,
             type = "any",
             select = "all"
           )
-        )),
-        suppressWarnings(tibble::as_tibble(
+        ),
+       tibble::as_tibble(
           precede(
             geneAnnot[idx$subjectHits],
             geneAnnot,
             select = "all",
             ignore.strand = TRUE
           )
-        ))
+        )
       ))
     idx$evaluating <-  evaluating[idx$queryHits]
     # remove same target gene and probe if counted twice
@@ -457,8 +459,7 @@ getRegionNearGenes <- function(TRange = NULL,
     ret <-
       rbind(ret, # keep old results
             cbind(
-              suppressWarnings(
-                tibble::as_tibble(geneAnnot[idx$subjectHits])),
+                tibble::as_tibble(geneAnnot[idx$subjectHits]),
               tibble::tibble(
                 "ID" = names(TRange)[evaluating],
                 "Distance" = ifelse(start(TRange[evaluating]) < start(geneAnnot[idx$subjectHits]), 1,-1) *
@@ -471,12 +472,12 @@ getRegionNearGenes <- function(TRange = NULL,
   }
   ret <- ret[!duplicated(ret[,c("ensembl_gene_id","ID")]),]
 
-  idx <- suppressWarnings(tibble::as_tibble(nearest.idx))
+  idx <- tibble::as_tibble(nearest.idx)
   evaluating <- idx$queryHits
   for (i in 1:(numFlankingGenes)) {
     idx <-
       unique(rbind(
-        suppressWarnings(tibble::as_tibble(
+      tibble::as_tibble(
           findOverlaps(
             geneAnnot[idx$subjectHits],
             geneAnnot,
@@ -484,15 +485,15 @@ getRegionNearGenes <- function(TRange = NULL,
             type = "any",
             select = "all"
           )
-        )),
-        suppressWarnings(tibble::as_tibble(
+       ),
+       tibble::as_tibble(
           follow(
             geneAnnot[idx$subjectHits],
             geneAnnot,
             select = "all",
             ignore.strand = TRUE
           )
-        ))
+        )
       ))
     idx$evaluating <-  evaluating[idx$queryHits]
     idx <- idx[!duplicated(idx[, 2:3]), ]
@@ -501,13 +502,13 @@ getRegionNearGenes <- function(TRange = NULL,
     evaluating <- evaluating[idx$queryHits]
     ret <-
       rbind(ret, cbind(
-        suppressWarnings(tibble::as_tibble(geneAnnot[idx$subjectHits])),
-        suppressWarnings(tibble::tibble(
+        tibble::as_tibble(geneAnnot[idx$subjectHits]),
+        tibble::tibble(
           "ID" = names(TRange)[evaluating],
           "Distance" = ifelse(start(TRange[evaluating]) < start(geneAnnot[idx$subjectHits]), 1,-1) *
             distance(TRange[evaluating],
                      geneAnnot[idx$subjectHits], select = "all",ignore.strand = TRUE)
-        ))
+        )
       ))
     pb$tick()
   }
@@ -610,9 +611,9 @@ getdata <- function(...)
 }
 
 
-#' @title get.feature.probe to select probes within promoter regions or distal regions.
+#' @title getFeatureProbe to select probes within promoter regions or distal regions.
 #' @description
-#' get.feature.probe is a function to select the probes falling into
+#' getFeatureProbe is a function to select the probes falling into
 #' distal feature regions or promoter regions.
 #' @importFrom GenomicRanges promoters
 #' @description This function selects the probes on HM450K that either overlap
@@ -644,12 +645,12 @@ getdata <- function(...)
 #'  probe selection.
 #'  @return A GRanges object contains the coordinate of probes which locate
 #'  within promoter regions or distal feature regions such as union enhancer from REMC and FANTOM5.
-#'  @usage get.feature.probe(feature,
+#'  @usage getFeatureProbe(feature,
 #'                           TSS,
 #'                           TSS.range = list(upstream = 2000, downstream = 2000),
 #'                           promoter = FALSE, rm.chr = NULL)
 #'
-get.feature.probe <- function(feature = NULL,
+getFeatureProbe <- function(feature = NULL,
                               TSS,
                               genome = "hg38",
                               met.platform = "HM450",
@@ -666,11 +667,9 @@ get.feature.probe <- function(feature = NULL,
     # The function getTSS gets the transcription coordinantes from Ensemble (GENCODE)
     TSS <- getTSS(genome = genome)   # 208,423
   }
-  suppressWarnings({
     promoters <- promoters(TSS,
                            upstream = TSS.range[["upstream"]],
                            downstream = TSS.range[["downstream"]])
-  })
 
   if(!promoter){
     probe <- probe[setdiff(1:length(probe),unique(queryHits(findOverlaps(probe,promoters,ignore.strand=TRUE))))]  #598,225

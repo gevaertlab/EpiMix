@@ -27,23 +27,23 @@ list with paths to downloaded files for gene expression.
 Download gene expression data from TCGA.
 }
 \details{
-mode: when mode is set to "Regular", this function downloads the level 3 RNAseq data (file tag "mRNAseq_Preprocess.Level_3"). Since there is not enough RNAseq data for OV and GBM, the micro array data is
-downloaded. If you plan to run the EpiMix on miRNA- or lncRNA-coding genes, please specify the "mode" parameter to "miRNA" or "lncRNA".
+mode: when mode is set to 'Regular', this function downloads the level 3 RNAseq data (file tag 'mRNAseq_Preprocess.Level_3'). Since there is not enough RNAseq data for OV and GBM, the micro array data is
+downloaded. If you plan to run the EpiMix on miRNA- or lncRNA-coding genes, please specify the 'mode' parameter to 'miRNA' or 'lncRNA'.
 }
 \examples{
-{
+\donttest{
 # Example #1 : download regular gene expression data for ovarian cancer
-GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV", TargetDirectory = tempdir())
+GEdirectories <- TCGA_Download_GeneExpression(CancerSite = 'OV', TargetDirectory = tempdir())
 
 # Example #2 : download miRNA expression data for ovarian cancer
-GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
+GEdirectories <- TCGA_Download_GeneExpression(CancerSite = 'OV',
                                               TargetDirectory = tempdir(),
-                                              mode = "miRNA")
+                                              mode = 'miRNA')
 
 # Example #3 : download lncRNA expression data for ovarian cancer
-# GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
-#                                               TargetDirectory = tempdir(),
-#                                                mode = "lncRNA")
+GEdirectories <- TCGA_Download_GeneExpression(CancerSite = 'OV',
+                                               TargetDirectory = tempdir(),
+                                               mode = 'lncRNA')
 }
 
 }

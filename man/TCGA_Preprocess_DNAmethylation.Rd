@@ -10,7 +10,8 @@ TCGA_Preprocess_DNAmethylation(
   doBatchCorrection = FALSE,
   batch.correction.method = "Seurat",
   MissingValueThreshold = 0.2,
-  cores = 1
+  cores = 1,
+  use450K = FALSE
 )
 }
 \arguments{
@@ -20,11 +21,13 @@ TCGA_Preprocess_DNAmethylation(
 
 \item{doBatchCorrection}{logical indicating whether to perform batch correction. Default: False.}
 
-\item{batch.correction.method}{character string indicating the method to perform batch correction. The value should be either "Seurat" or "Combat". Default: "Seurat". Note: Seurat is much faster than the Combat.}
+\item{batch.correction.method}{character string indicating the method to perform batch correction. The value should be either 'Seurat' or 'Combat'. Default: 'Seurat'. Note: Seurat is much faster than the Combat.}
 
 \item{MissingValueThreshold}{numeric values indicating the threshold for removing samples or genes with missing values.Default: 0.2.}
 
 \item{cores}{integer indicating the number of cores to be used for performing batch correction with Combat.}
+
+\item{use450K}{logic indicating whether to force use 450K, instead of 27K data.}
 }
 \value{
 pre-processed methylation data matrix with CpG probe in rows and samples in columns.
@@ -39,9 +42,9 @@ Pre-process includes eliminating samples and genes with too many NAs, imputing N
 If there are samples with both 27k and 450k data, the 27k data will be used only if the sample number in the 27k data is greater than the 450k data and there is more than 50 samples in the 27k data. Otherwise, the 450k data is used and the 27k data is discarded.
 }
 \examples{
-\dontrun{
-METdirectories <- TCGA_Download_DNAmethylation(CancerSite = "OV", TargetDirectory = tempdir())
-METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite = "OV",
+\donttest{
+METdirectories <- TCGA_Download_DNAmethylation(CancerSite = 'OV', TargetDirectory = tempdir())
+METProcessedData <- TCGA_Preprocess_DNAmethylation(CancerSite = 'OV',
                                                    METdirectories = METdirectories)
 }
 }
