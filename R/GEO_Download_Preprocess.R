@@ -394,11 +394,12 @@ GEO_Preprocess_GeneExpression <- function(gene.expression.data, sample.info = NU
     if (any(grepl("ENSG", rownames(gene.expression.data))) | any(grepl("ENST", rownames(gene.expression.data)))) {
         cat("Mapping transcripts to genes...\n")
         gene.expression.data <- convertGeneNames(gene.expression.data)
+
+        if (length(rownames(gene.expression.data)) != length(unique(rownames(gene.expression.data)))) {
+          gene.expression.data <- removeDuplicatedGenes(gene.expression.data)
+        }
     }
 
-    if (length(rownames(gene.expression.data)) != length(unique(rownames(gene.expression.data)))) {
-        gene.expression.data <- removeDuplicatedGenes(gene.expression.data)
-    }
 
     ### Step 4: Split the experiment and the control group
     MET_Experiment <- MET_Control <- NULL
