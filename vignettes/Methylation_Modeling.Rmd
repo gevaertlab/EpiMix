@@ -284,7 +284,7 @@ EpiMixResults <- TCGA_GetData(CancerSite = CancerSite,
                               mode = mode, 
                               roadmap.epigenome.ids = roadmap.epigenome.ids, 
                               outputDirectory = outputDirectory,
-                              cores = 1)
+                              cores = 10)
 
 ```
 <br>
@@ -301,6 +301,11 @@ The above one-step functions in Section  can be executed in a step-by-step manne
 ```{r, message=FALSE, results='hide'}
 METdirectories <- TCGA_Download_DNAmethylation(CancerSite = "OV", 
                                                TargetDirectory = outputDirectory)
+```
+
+```{r, message=FALSE}
+cat("HM27k directory:", METdirectories$METdirectory27k, "\n")
+cat("HM450k directory:", METdirectories$METdirectory450k, "\n")
 ```
 
 + Preprocess DNA methylation data   
