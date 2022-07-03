@@ -644,7 +644,7 @@ CorrectBatchEffect <- function(GEN_Data, BatchData, batch.correction.method, Min
     featurePerSet = 50000) {
 
     # Perform some input check
-    if (is.null(BatchData) | BatchData == "") {
+    if (is.null(BatchData)) {
         stop("BatchData is NULL, please provide batch information.\n")
     }
 
@@ -1109,7 +1109,6 @@ TCGA_Preprocess_GeneExpression <- function(CancerSite, MAdirectories, mode = "Re
     # ---------------------------------------------------------------------------------------------
     # Step 1: Load gene expression data
     # ---------------------------------------------------------------------------------------------
-
     BatchData <- EpiMix_GetData("TCGA_BatchData")
     MinPerBatchCancer <- 5
     MinPerBatchNormal <- 2
