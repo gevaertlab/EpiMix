@@ -15,6 +15,7 @@ EpiMix(
   met.platform = "HM450",
   genome = "hg38",
   listOfGenes = NULL,
+  filter = TRUE,
   raw.pvalue.threshold = 0.05,
   adjusted.pvalue.threshold = 0.05,
   numFlankingGenes = 20,
@@ -49,6 +50,8 @@ Should contain two columns: the first column (named 'primary') indicates the sam
 \item{genome}{Character string indicating the genome build version to be used for CpG annotation. Should be either 'hg19' or 'hg38'. Default: 'hg38'.}
 
 \item{listOfGenes}{Character vector used for filtering the genes to be evaluated.}
+
+\item{filter}{Logic indicating whether to use a linear regression filter to pre-filter the CpGs whose methyhlation correlates with gene expression. Used in the Regular mode. Default: TRUE.}
 
 \item{raw.pvalue.threshold}{Numeric value indicating the threshold of the raw P value for selecting the functional CpG-gene pairs. Default: 0.05.}
 

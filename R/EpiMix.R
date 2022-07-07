@@ -35,6 +35,7 @@ NULL
 #' @param met.platform Character string indicating the microarray type for collecting the DNA methylation data. The value should be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'
 #' @param genome Character string indicating the genome build version to be used for CpG annotation. Should be either 'hg19' or 'hg38'. Default: 'hg38'.
 #' @param listOfGenes Character vector used for filtering the genes to be evaluated.
+#' @param filter Logic indicating whether to use a linear regression filter to pre-filter the CpGs whose methyhlation correlates with gene expression. Used in the Regular mode. Default: TRUE.
 #' @param raw.pvalue.threshold Numeric value indicating the threshold of the raw P value for selecting the functional CpG-gene pairs. Default: 0.05.
 #' @param adjusted.pvalue.threshold Numeric value indicating the threshold of the adjusted P value for selecting the function CpG-gene pairs. Default: 0.05.
 #' @param numFlankingGenes Numeric value indicating the number of flanking genes whose expression is to be evaluated for selecting the functional enhancers. Default: 20.
@@ -126,7 +127,7 @@ NULL
 
 EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sample.info,
     group.1, group.2, promoters = FALSE, met.platform = "HM450", genome = "hg38",
-    listOfGenes = NULL, raw.pvalue.threshold = 0.05, adjusted.pvalue.threshold = 0.05,
+    listOfGenes = NULL, filter = TRUE, raw.pvalue.threshold = 0.05, adjusted.pvalue.threshold = 0.05,
     numFlankingGenes = 20, roadmap.epigenome.groups = NULL, roadmap.epigenome.ids = NULL,
     chromatin.states = c("EnhA1", "EnhA2", "EnhG1", "EnhG2"), NoNormalMode = FALSE,
     cores = 1, MixtureModelResults = NULL, OutputRoot = ".") {
@@ -153,6 +154,15 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
     if (!is.null(gene.expression.data) & length(gene.expression.data) == 0) {
         stop("gene.expression.data matrix is empty, please check the gene.expression.data matrix\n")
     }
+
+    if (sum(is.na(methylation.data) > 0)) {
+      stop("detected null value in DNA methylation data\n")
+    }
+
+    if (sum(is.na(gene.expression.data) > 0)) {
+      stop("detected null value in gene expression data\n")
+    }
+
     if (!mode %in% c("Regular", "Enhancer", "miRNA", "lncRNA"))
         stop("'mode' must be one of the followings: 'Regular', 'Enhancer', 'miRNA', 'lncRNA'")
     if (is.null(sample.info)) {
@@ -213,7 +223,7 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         FunctionalProbes <- NULL
         if (is.null(MixtureModelResults) & !is.null(gene.expression.data)) {
             FunctionalProbes <- EpiMix_ModelGeneExpression(methylation.data, gene.expression.data,
-                ProbeAnnotation, cores = cores, filter = TRUE)
+                ProbeAnnotation, cores = cores, filter = filter)
             if (length(FunctionalProbes) == 0) {
                 stop("No transcriptionally predicitve CpGs were found.")
             }

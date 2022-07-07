@@ -167,8 +167,9 @@ get_firehoseData <- function(downloadData = TRUE, saveDir = "./", TCGA_acronym_u
         # doesn't exist. So I'm changing the name of the folder to prevent
         # this. We can't change the name of the file as it's used in the
         # Preprocess functions
-        idx <- which(vapply(c("methylation27", "methylation450", "mRNAseq", "transcriptome"),
-            grepl, dataFileTag, FUN.VALUE = integer(1)))[1]
+        idx <- which(sapply(c("methylation27", "methylation450", "mRNAseq", "transcriptome"), grepl, dataFileTag))[1]
+        # idx <- which(vapply(c("methylation27", "methylation450", "mRNAseq", "transcriptome"),
+        #     grepl, dataFileTag, FUN.VALUE = integer(1)))[1]
         newtag <- ifelse(idx == 1, "meth27", ifelse(idx == 2, "meth450", "geneexpr"))
         nameForFolder <- paste(TCGA_acronym_uppercase, dataType, newtag, sep = "_")
         nameForDownloadedFile <- paste0(nameForFolder, ".", fileType)
