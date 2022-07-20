@@ -57,10 +57,13 @@ MethylMix_MixtureModel <- function(METcancer, METnormal = NULL, FunctionalGenes,
 
   close(pb)
 
-  #cat("Postprecessing...\n")
   if (is.null(dim(res$Classifications))) res$Classifications <- matrix(res$Classifications, nrow = 1)
   if (is.null(dim(res$MethylationStates))) res$Classifications <- matrix(res$Classifications, nrow = 1)
-  rownames(res$MethylationStates) <- rownames(res$Classifications) <- rownames(METcancer)
+
+  rownames(res$MethylationStates) <- rownames(METcancer)
+  if(nrow(res$Classifications) == nrow(METcancer)){
+      rownames(res$Classifications) <- rownames(METcancer)
+  }
   colnames(res$MethylationStates) <- colnames(res$Classifications) <- colnames(METcancer)
 
   # Removing the genes without any differential methylation.
@@ -73,7 +76,9 @@ MethylMix_MixtureModel <- function(METcancer, METnormal = NULL, FunctionalGenes,
     res$MixtureStates = res$MixtureStates[NonZeroPositions, drop=FALSE]
     res$Models = res$Models[NonZeroPositions, drop=FALSE]
     res$MethylationStates = res$MethylationStates[NonZeroPositions, , drop=FALSE]
-    res$Classifications = res$Classifications[NonZeroPositions, , drop=FALSE]
+    if(nrow(res$Classifications) == nrow(METcancer)){
+      res$Classifications = res$Classifications[NonZeroPositions, , drop=FALSE]
+    }
   }
 
   # Adding names and removing things that we don't want to return

@@ -322,7 +322,6 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC
     }
 }
 
-
 #' The GEO_Preprocess_GeneExpression function
 #' @description Preprocess the gene expression data from the GEO database.
 #' @details

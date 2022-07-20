@@ -19,22 +19,14 @@ filterProbes <- function(mode, gene.expression.data, listOfGenes, promoters, met
     if (!is.null(listOfGenes)) {
         warning("Please input the selected gene names in the upper case format: e.g., IGF1,  CCND3, MIRLET7A1, MIR10226, LINC01409, TTLL10-AS1",
             immediate. = TRUE)
-        if (mode == "miRNA") {
-            ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$HGNC %in% listOfGenes),
-                ]
-        } else {
-            ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$gene %in% listOfGenes),
-                ]
-        }
-        cat("Found", length(unique(ProbeAnnotation$probe)), "CpGs associated with the user-specified genes.\n")
+       ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$gene %in% listOfGenes),]
+       cat("Found", length(unique(ProbeAnnotation$probe)), "CpGs associated with the user-specified genes.\n")
     }
     if (!is.null(gene.expression.data)) {
-        # we only select the CpGs associated with genes with gene expression
+        # we only select the CpGs associated with genes with expression
         # data available
-        ProbeAnnotation <- ProbeAnnotation[ProbeAnnotation$gene %in% rownames(gene.expression.data),
-            ]
+       ProbeAnnotation <- ProbeAnnotation[ProbeAnnotation$gene %in% rownames(gene.expression.data), ]
     }
-
     if (promoters) {
         cat("Selecting CpGs associated with gene promoters...\n")
         promoters <- getFeatureProbe(met.platform = met.platform, genome = genome,
@@ -94,7 +86,7 @@ getProbeAnnotation <- function(mode, met.platform, genome) {
 #' @return a dataframe of functional CpG-gene matrix
 
 generateFunctionalPairs <- function(MET_matrix, MET_Control, gene.expression.data,
-    ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores) {
+    ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, mode = "Regular") {
     MET_matrix <- filterMethMatrix(MET_matrix = MET_matrix, MET_Control = MET_Control,
         gene.expression.data = gene.expression.data)
     if (length(MET_matrix) == 0 | nrow(MET_matrix) == 0 | ncol(MET_matrix) == 0) {
@@ -102,7 +94,9 @@ generateFunctionalPairs <- function(MET_matrix, MET_Control, gene.expression.dat
     }
     ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$probe %in% rownames(MET_matrix)),
         ]
+
     uniqueGenes <- unique(ProbeAnnotation$gene)
+
     iterations <- length(uniqueGenes)
     pb <- utils::txtProgressBar(max = iterations, style = 3)
 

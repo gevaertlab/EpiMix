@@ -216,7 +216,7 @@ getFunctionalProbes <- function(gene, probes, MET_matrix, gene.expression.data, 
     }
 
     # produce a dataframe for gene expression with methylation state and
-    # prevalence inforamtion
+    # prevalence information
     dataDEGs <- data.frame(Gene = rep(gene, length(probes)), Probe = probes)
     dataDEGs["Fold change of gene expression"] <- mRNA.fold.change
     dataDEGs["Comparators"] <- comparisons

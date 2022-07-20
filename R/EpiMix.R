@@ -278,8 +278,7 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
             return(MethylMixResults)
         }
 
-        ### Step 7: modeling the gene expression and select the functional
-        ### enhancer probes
+        ### Step 7: modeling the gene expression and select the functional probes
         cat("Identifying functional CpG-gene pairs...\n")
         FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
             ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores)
@@ -307,6 +306,13 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         cat("Running", mode, "mode...\n")
         cat("Please be mindful that the gene expression data are expected to be data obtained from microRNA-seq.\n")
         ### Step 1: filter CpGs based on user-specified conditions
+
+        # Convert precursor name (hsa-XXX) to human gene sysmbol(MIRXXX)
+        if(sum(startsWith(rownames(gene.expression.data), "hsa")) == nrow(gene.expression.data)){
+          mapping = mapTranscriptToGene(rownames(gene.expression.data))
+          rownames(gene.expression.data) <- mapping$Gene_name
+        }
+
         ProbeAnnotation <- filterProbes(mode = mode, gene.expression.data = gene.expression.data,
             listOfGenes = listOfGenes, promoters = promoters, met.platform = met.platform,
             genome = genome)
@@ -361,7 +367,7 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         ### Step 6: identify transcriptionally predictive probes
         cat("Identifying functional CpG-gene pairs...\n")
         FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
-            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores)
+            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, mode = mode)
         if (is.null(FunctionalPairs)) {
             cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
             prev.data <- addGeneNames(prev.data, ProbeAnnotation)

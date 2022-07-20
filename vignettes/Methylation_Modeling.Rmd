@@ -47,13 +47,25 @@ EpiMix incorporates specialized algorithms to identify functional DNA methylatio
 <br>
 
 ## 2. Installation
-To **install** the EpiMix package, the easiest way is through bioconductor:
+
+### 2.1 Bioconductor
 
 ```{r, eval = FALSE}
-if (!requireNamespace("BiocManager", quietly=TRUE))
+if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install(EpiMix)
+
+BiocManager::install(version='devel')
+
+BiocManager::install("EpiMix")
 ```
+
+### 2.2 Github
+
+```{r, eval = FALSE}
+devtools::install_github("gevaertlab/EpiMix.data")
+devtools::install_github("gevaertlab/EpiMix")
+```
+
 To **load** the EpiMix package in your R session, type `library(EpiMix)`
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
