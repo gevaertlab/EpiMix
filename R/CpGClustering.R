@@ -147,3 +147,53 @@ TCGA_GENERIC_MET_ClusterProbes_Helper_ClusterGenes_with_hclust <- function(Gene,
     METnormal_Clustered <- NULL
   return(list(METcancer_Clustered, METnormal_Clustered, ProbeMapping))
 }
+
+
+#' The translateMethylMixResults function
+#' @description unfold clustered MethylMix results to single CpGs
+#' @param MethylMixResults list of MethylMix output
+#' @param probeMapping dataframe of probe to gene-cluster mapping
+#' @return list of unfolded MethylMix results
+#'
+#'
+translateMethylMixResults <- function(MethylMixResults, probeMapping){
+
+  # Convert MethylationStates
+  MethylationStates <- data.frame(MethylMixResults$MethylationStates, check.names = FALSE) # (573, 582)
+  colnames(probeMapping) <- c("CpG", "Gene_Cluster") # (23835, 2)
+  MethylationStates['Gene_Cluster'] <- rownames(MethylationStates)
+  MethylationStates <- merge(MethylationStates, probeMapping, by = "Gene_Cluster")
+  MethylationStates <- MethylationStates[!duplicated(MethylationStates$CpG),]
+  rownames(MethylationStates) <- MethylationStates$CpG
+  keeps <- setdiff(colnames(MethylationStates), c("CpG", "Gene_Cluster"))
+  MethylationStates <- MethylationStates[, keeps] # (797,582)
+  MethylationStates <- as.matrix(MethylationStates)
+
+  # Convert Nr component
+  NrComponents <- apply(MethylationStates, 1, function(x) length(unique(x)))
+
+  # Convert Mixture States
+  mixture.states <- apply(MethylationStates, 1, function(x) sort(unique(x)))
+
+  # Convert Classifications
+  Classfications <- data.frame(MethylMixResults$Classifications, check.names = FALSE) # (573, 582)
+  colnames(probeMapping) <- c("CpG", "Gene_Cluster") # (23835, 2)
+  Classfications ['Gene_Cluster'] <- rownames(Classfications )
+  Classfications  <- merge(Classfications, probeMapping, by = "Gene_Cluster")
+  Classfications  <- Classfications [!duplicated(Classfications$CpG),]
+  rownames(Classfications) <- Classfications$CpG
+  keeps <- setdiff(colnames(Classfications), c("CpG", "Gene_Cluster"))
+  Classfications  <- Classfications [, keeps] # (797,582)
+  Classfications  <- as.matrix(Classfications)
+
+  # Convert Methylation Drivers
+  MethylationDrivers <-  rownames(MethylationStates)
+
+  MethylMixResults$NrComponents <- NrComponents
+  MethylMixResults$MethylationStates <- MethylationStates
+  MethylMixResults$MixtureStates <- mixture.states
+  MethylMixResults$Classifications <- Classfications
+  MethylMixResults$MethylationDrivers <- MethylationDrivers
+
+  return(MethylMixResults)
+}

@@ -29,11 +29,18 @@ filterProbes <- function(mode, gene.expression.data, listOfGenes, promoters, met
     }
     if (promoters) {
         cat("Selecting CpGs associated with gene promoters...\n")
-        promoters <- getFeatureProbe(met.platform = met.platform, genome = genome,
-            promoter = TRUE, TSS.range = list(upstream = 2000, downstream = 1000))
-        promoter.probes <- names(promoters)
-        overlapProbes <- intersect(promoter.probes, ProbeAnnotation$probe)
+        if(mode == "Regular" | mode == "lncRNA"){
+          promoters <- getFeatureProbe(met.platform = met.platform,
+                                       genome = genome,
+                                       promoter = TRUE,
+                                       TSS.range = list(upstream = 2000, downstream = 500))
+          promoter.probes <- names(promoters)
+          overlapProbes <- intersect(promoter.probes, ProbeAnnotation$probe)
+        }else if(mode == "miRNA"){
+          overlapProbes <- ProbeAnnotation$probe[which(ProbeAnnotation$promoter ==1)]
+        }
         cat("Found", length(overlapProbes), "CpGs on promoters\n")
+        ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$probe %in% overlapProbes), ]
     }
     return(ProbeAnnotation)
 }
@@ -71,58 +78,6 @@ getProbeAnnotation <- function(mode, met.platform, genome) {
         ProbeAnnotation <- data.frame(probe = ProbeAnnotation, gene = names(ProbeAnnotation))
     }
     return(ProbeAnnotation)
-}
-
-#' The generateFunctionalPairs function
-#' @description Wrapper function to get functional CpG-gene pairs
-#' @param MET_matrix matrix of methylation states
-#' @param MET_Control beta values of control groups
-#' @param gene.expression.data matrix of gene expression data
-#' @param ProbeAnnotation dataframe of probe annotation
-#' @param raw.pvalue.threshold raw p value threshold
-#' @param adjusted.pvalue.threshold  adjusted p value threshold
-#' @param cores number of computational cores
-#'
-#' @return a dataframe of functional CpG-gene matrix
-
-generateFunctionalPairs <- function(MET_matrix, MET_Control, gene.expression.data,
-    ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, mode = "Regular") {
-    MET_matrix <- filterMethMatrix(MET_matrix = MET_matrix, MET_Control = MET_Control,
-        gene.expression.data = gene.expression.data)
-    if (length(MET_matrix) == 0 | nrow(MET_matrix) == 0 | ncol(MET_matrix) == 0) {
-        return(NULL)
-    }
-    ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$probe %in% rownames(MET_matrix)),
-        ]
-
-    uniqueGenes <- unique(ProbeAnnotation$gene)
-
-    iterations <- length(uniqueGenes)
-    pb <- utils::txtProgressBar(max = iterations, style = 3)
-
-    FunctionalPairs <- data.frame()
-    if (cores == "" | cores == 1) {
-        for (i in seq_len(iterations)) {
-            gene <- uniqueGenes[i]
-            probes <- ProbeAnnotation$probe[which(ProbeAnnotation$gene == gene)]
-            pairs <- getFunctionalProbes(gene, probes, MET_matrix, gene.expression.data,
-                raw.pvalue.threshold = raw.pvalue.threshold, adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-            FunctionalPairs <- rbind(FunctionalPairs, pairs)
-            utils::setTxtProgressBar(pb, i)
-        }
-    } else {
-        progress <- function(n) utils::setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-        FunctionalPairs <- foreach::foreach(i = seq_len(iterations), .combine = rbind, .options.snow = opts,
-            .verbose = FALSE) %dopar% {
-            gene <- uniqueGenes[i]
-            probes <- ProbeAnnotation$probe[which(ProbeAnnotation$gene == gene)]
-            getFunctionalProbes(gene, probes, MET_matrix, gene.expression.data, raw.pvalue.threshold = raw.pvalue.threshold,
-                adjusted.pvalue.threshold = adjusted.pvalue.threshold)
-        }
-    }
-    close(pb)
-    return(FunctionalPairs)
 }
 
 #' The addGeneNames function

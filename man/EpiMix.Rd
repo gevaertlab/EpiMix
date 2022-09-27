@@ -7,13 +7,15 @@
 EpiMix(
   methylation.data,
   gene.expression.data,
-  mode = "Regular",
   sample.info,
   group.1,
   group.2,
+  mode = "Regular",
   promoters = FALSE,
+  correlation = "negative",
   met.platform = "HM450",
   genome = "hg38",
+  cluster = FALSE,
   listOfGenes = NULL,
   filter = TRUE,
   raw.pvalue.threshold = 0.05,
@@ -33,9 +35,6 @@ EpiMix(
 
 \item{gene.expression.data}{Matrix of the gene expression data with genes in rows and samples in columns.}
 
-\item{mode}{Character string indicating the analytic mode to model DNA methylation.
-Should be one of the followings: 'Regular', 'Enhancer', 'miRNA' or 'lncRNA'. Default: 'Regular'. See details for more information.}
-
 \item{sample.info}{Dataframe that maps each sample to a study group.
 Should contain two columns: the first column (named 'primary') indicates the sample names, and the second column (named 'sample.type') indicating which study group each sample belongs to (e.g.,“Cancer” vs. “Normal”,  “Experiment” vs. “Control”). Sample names in the 'primary' column must coincide with the column names of the methylation.data.}
 
@@ -43,11 +42,18 @@ Should contain two columns: the first column (named 'primary') indicates the sam
 
 \item{group.2}{Character vector indicating the names(s) for the control group.}
 
+\item{mode}{Character string indicating the analytic mode to model DNA methylation.
+Should be one of the followings: 'Regular', 'Enhancer', 'miRNA' or 'lncRNA'. Default: 'Regular'. See details for more information.}
+
 \item{promoters}{Logic indicating whether to focus the analysis on CpGs associated with promoters (2000 bp upstream and 1000 bp downstream of the transcription start site). This parameter is only used for the Regular mode.}
+
+\item{correlation}{Character vector indicating the expected correlation between DNA methylation and gene expression. Can be either 'negative' or 'positive'. Default: 'negative'.}
 
 \item{met.platform}{Character string indicating the microarray type for collecting the DNA methylation data. The value should be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'}
 
 \item{genome}{Character string indicating the genome build version to be used for CpG annotation. Should be either 'hg19' or 'hg38'. Default: 'hg38'.}
+
+\item{cluster}{Logic indicating whether to cluster CpG site based on methylation levels using hierarchical clustering}
 
 \item{listOfGenes}{Character vector used for filtering the genes to be evaluated.}
 

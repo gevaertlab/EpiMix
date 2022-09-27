@@ -155,77 +155,7 @@ getMethStates_Helper <- function(DMValues) {
     return(state)
 }
 
-#' The getFunctionalProbes function
-#' @description Helper function to assess if the expression of a specific gene is reversely correlated with the methylation of a list of probes mapped to it.
-#' @details This function is gene-centered, which is used in the regular mode and the lncRNA mode of EpiMix.
-#' @param gene character string indicating the target gene to be modeled.
-#' @param probes character vector indicating the probes mapped to the target gene.
-#' @param MET_matrix methylation data matrix for CpGs from group.1 and group.2.
-#' @param gene.expression.data gene expression data matrix.
-#' @param correlation character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either 'negative' or 'positive'.
-#' @param raw.pvalue.threshold raw p value from testing DNA methylation and gene expression
-#' @param adjusted.pvalue.threshold adjusted p value from testing DNA methylation and gene expression
-#' @keywords internal
-#'
-#' @return dataframe with functional probe-gene pairs and corresponding p values obtained from the Wilcoxon test for gene expression and methylation.
-#'
-getFunctionalProbes <- function(gene, probes, MET_matrix, gene.expression.data, correlation = "negative",
-    raw.pvalue.threshold = 0.05, adjusted.pvalue.threshold = 0.01) {
 
-    mRNA.fold.change <- c()
-    comparisons <- c()
-    p <- c()
-
-    for (probe in probes) {
-        state <- fold_change <- cmp <- p_value <- NULL
-        DM_values <- MET_matrix[probe, ]  # a single-row vector with the names as sample names, and the values as DM values
-        state <- getMethStates_Helper(DM_values)
-        if (state == "Hyper") {
-            high.met.samples <- names(DM_values[DM_values > 0])
-            low.met.samples <- names(DM_values[DM_values == 0])
-            expr.low.values <- as.numeric(gene.expression.data[gene, high.met.samples])  # high methylation, low gene expression
-            expr.high.values <- as.numeric(gene.expression.data[gene, low.met.samples])  # low methylation, high gene expression
-            fold_change <- round(mean(expr.low.values)/mean(expr.high.values), 3)
-            cmp <- "hyper vs normal"
-            p_value <- wilcox.test(expr.high.values, expr.low.values, alternative = ifelse(correlation ==
-                "negative", "greater", "less"), exact = FALSE)$p.value
-
-        } else if (state == "Dual") {
-            high.met.samples <- names(DM_values[DM_values > 0])
-            low.met.samples <- names(DM_values[DM_values < 0])
-            expr.low.values <- as.numeric(gene.expression.data[gene, high.met.samples])  # high methylation, low gene expression
-            expr.high.values <- as.numeric(gene.expression.data[gene, low.met.samples])  # low methylation, high gene expression
-            fold_change <- round(mean(expr.high.values)/mean(expr.low.values), 3)
-            cmp <- "hypo vs hyper"
-            p_value <- wilcox.test(expr.high.values, expr.low.values, alternative = ifelse(correlation ==
-                "negative", "greater", "less"), exact = FALSE)$p.value
-        } else {
-            high.met.samples <- names(DM_values[DM_values == 0])
-            low.met.samples <- names(DM_values[DM_values < 0])
-            expr.low.values <- as.numeric(gene.expression.data[gene, high.met.samples])  # high methylation, low gene expression
-            expr.high.values <- as.numeric(gene.expression.data[gene, low.met.samples])  # low methylation, high gene expression
-            fold_change <- round(mean(expr.high.values)/mean(expr.low.values), 3)
-            cmp <- "hypo vs normal"
-            p_value <- wilcox.test(expr.high.values, expr.low.values, alternative = ifelse(correlation ==
-                "negative", "greater", "less"), exact = FALSE)$p.value
-        }
-
-        mRNA.fold.change <- append(mRNA.fold.change, fold_change)
-        comparisons <- append(comparisons, cmp)
-        p <- append(p, p_value)
-    }
-
-    # produce a dataframe for gene expression with methylation state and
-    # prevalence information
-    dataDEGs <- data.frame(Gene = rep(gene, length(probes)), Probe = probes)
-    dataDEGs["Fold change of gene expression"] <- mRNA.fold.change
-    dataDEGs["Comparators"] <- comparisons
-    dataDEGs["Raw.p"] <- p
-    dataDEGs["Adjusted.p"] <- p.adjust(as.vector(unlist(dataDEGs["Raw.p"])), method = "fdr")
-    dataDEGs <- dataDEGs[which(dataDEGs$Raw.p < raw.pvalue.threshold & dataDEGs$Adjusted.p <
-        adjusted.pvalue.threshold), ]
-    return(dataDEGs)
-}
 
 #' The splitmatix function
 #'
@@ -265,49 +195,6 @@ get.prevalence <- function(MethylMixResults) {
     return(prev.data)
 }
 
-#' The model.gene.expression function
-#' @description obtain a dataframe with the fold change of gene expression and signifcant p values
-#' @param target.probe character string indicating the target CpG site.
-#' @param MET_matrix combined methylation state matrix for both case and control groups.
-#' @param gene.expression.data a matrix with gene expression data.
-#' @param target.genes character vector with the names of the genes associated with the target CpGs.
-#' @param correlation character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either 'negative' or 'positive'.
-#' @param calculate.fold.change logic indicating whether to calculate fold change between different mixtures
-#' @keywords internal
-#'
-#' @return a dataframe with fold change of gene expression and p values.
-#'
-model.gene.expression <- function(target.probe, MET_matrix, gene.expression.data,
-    target.genes, correlation = "negative", calculate.fold.change = TRUE) {
-
-    DM_values <- MET_matrix[target.probe, ]
-    state <- getMethStates_Helper(DM_values)
-    high.met.samples <- which(DM_values == max(DM_values))
-    low.met.samples <- which(DM_values == min(DM_values))
-    Exps <- gene.expression.data[target.genes, , drop = FALSE]
-    if (length(Exps) == 0)
-        return(NULL)
-    # calculate raw p values
-    test.p <- unlist(lapply(splitmatrix(Exps), function(x) {
-        wilcox.test(x[low.met.samples], x[high.met.samples], alternative = ifelse(correlation ==
-            "negative", "greater", "less"), exact = FALSE)$p.value
-    }))
-    res <- data.frame(Gene = target.genes, test.p = test.p[match(target.genes, names(test.p))],
-        stringsAsFactors = FALSE)
-    if (calculate.fold.change) {
-        fold.change <- unlist(lapply(splitmatrix(Exps), function(x) {
-            if (state == "Hyper") {
-                round(mean(x[high.met.samples])/mean(x[low.met.samples]), 3)
-            } else if (state == "Dual") {
-                round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
-            } else {
-                round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
-            }
-        }))
-        res$fold_change <- fold.change[match(target.genes, names(fold.change))]
-    }
-    return(res)
-}
 
 
 #' The get.chromosome function
@@ -377,6 +264,52 @@ get.comparators <- function(state) {
     }
     return(cmp)
 }
+
+
+#' The model.gene.expression function
+#' @description obtain a dataframe with the fold change of gene expression and signifcant p values
+#' @param target.probe character string indicating the target CpG site.
+#' @param MET_matrix combined methylation state matrix for both case and control groups.
+#' @param gene.expression.data a matrix with gene expression data.
+#' @param target.genes character vector with the names of the genes associated with the target CpGs.
+#' @param correlation character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either 'negative' or 'positive'.
+#' @param calculate.fold.change logic indicating whether to calculate fold change between different mixtures
+#' @keywords internal
+#'
+#' @return a dataframe with fold change of gene expression and p values.
+#'
+model.gene.expression <- function(target.probe, MET_matrix, gene.expression.data,
+                                  target.genes, correlation = "negative", calculate.fold.change = TRUE) {
+
+  DM_values <- MET_matrix[target.probe, ]
+  state <- getMethStates_Helper(DM_values)
+  high.met.samples <- which(DM_values == max(DM_values))
+  low.met.samples <- which(DM_values == min(DM_values))
+  Exps <- gene.expression.data[target.genes, , drop = FALSE]
+  if (length(Exps) == 0)
+    return(NULL)
+  # calculate raw p values
+  test.p <- unlist(lapply(splitmatrix(Exps), function(x) {
+    wilcox.test(x[low.met.samples], x[high.met.samples], alternative = ifelse(correlation ==
+                                                                                "negative", "greater", "less"), exact = FALSE)$p.value
+  }))
+  res <- data.frame(Gene = target.genes, test.p = test.p[match(target.genes, names(test.p))],
+                    stringsAsFactors = FALSE)
+  if (calculate.fold.change) {
+    fold.change <- unlist(lapply(splitmatrix(Exps), function(x) {
+      if (state == "Hyper") {
+        round(mean(x[high.met.samples])/mean(x[low.met.samples]), 3)
+      } else if (state == "Dual") {
+        round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
+      } else {
+        round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
+      }
+    }))
+    res$fold_change <- fold.change[match(target.genes, names(fold.change))]
+  }
+  return(res)
+}
+
 
 #' The getFunctionalGenes function
 #' @description Helper function to assess if the methylation of a probe is reversely correlated with the expression of its nearby genes.
@@ -468,102 +401,22 @@ filterMethMatrix <- function(MET_matrix, MET_Control, gene.expression.data) {
         common.samps <- intersect(colnames(MET_matrix), colnames(gene.expression.data))
         MET_matrix <- MET_matrix[, common.samps, drop = FALSE]
     }
-    # Filter 2: filtering out probes with the minority group having sample
-    # number < 3. Otherwise, the Wilcoxon test won't work.
+
+    # Filter 2: filtering out probes with only one methylation state
     if (ncol(MET_matrix) > 0) {
+      METstatesCounts <- apply(MET_matrix, 1, function(x) length(unique(x)))
+      MET_matrix <- MET_matrix[METstatesCounts > 1, ,drop = FALSE]
+    }
+
+    # Filter 3: filtering out probes with the minority group having sample
+    # number < 3. Otherwise, the Wilcoxon test won't work.
+    if (nrow(MET_matrix) > 0) {
         METminCounts <- apply(MET_matrix, 1, function(x) min(as.numeric(table(x))))
-        MET_matrix <- MET_matrix[METminCounts >= 3, ]
+        MET_matrix <- MET_matrix[METminCounts >= 3, ,drop = FALSE]
     }
     return(MET_matrix)
 }
 
-
-#' The EpiMix_ModelGeneExpression function
-#' @description pre-select funcitonal probes.
-#' @param methylation.data methylation data matrix.
-#' @param gene.expression.data gene expression data matrix.
-#' @param ProbeAnnotation dataframe of probe annotation
-#' @param cores number of CPU cores used for computation
-#' @param filter logical indicating whether to perform a linear regression to select functional probes
-#' @return a character vector of probe names.
-#' @import doSNOW
-#' @keywords internal
-#'
-#'
-EpiMix_ModelGeneExpression <- function(methylation.data, gene.expression.data, ProbeAnnotation,
-    cores, filter) {
-    FunctionalProbes <- character(0)
-
-    # overlapping samples to select only samples with both methylation data and
-    # gene expression data
-    OverlapSamples <- intersect(colnames(methylation.data), colnames(gene.expression.data))
-    cat("Found", length(OverlapSamples), "samples with both methylation and gene expression data.\n")
-    gene.expression.data <- gene.expression.data[, OverlapSamples, drop = FALSE]
-    methylation.data <- methylation.data[, OverlapSamples, drop = FALSE]
-
-    # select the probes for those genes with the gene expression data available
-    ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$gene %in% rownames(gene.expression.data)),
-        ]
-    OverlapProbes <- intersect(rownames(methylation.data), ProbeAnnotation$probe)
-    methylation.data <- methylation.data[OverlapProbes, , drop = FALSE]
-
-    uniqueProbes <- rownames(methylation.data)
-
-    if (filter) {
-        cat("Modeling gene expression...\n")
-        PvalueThreshold <- 0.001
-        RsquareThreshold <- 0.1
-
-        iterations <- length(uniqueProbes)
-        pb <- txtProgressBar(max = iterations, style = 3)
-
-        if (cores == "" | cores == 1) {
-            for (i in 1:iterations) {
-                tmpGenes <- ProbeAnnotation$gene[which(ProbeAnnotation$probe == uniqueProbes[i])]
-                for (gene in tmpGenes) {
-                  res <- lm(gene.expression.data[gene, ] ~ methylation.data[uniqueProbes[i],
-                    ])
-                  res.summary <- summary(res)
-                  if (res$coefficients[2] < 0 & res.summary$coefficients[2, 4] <
-                    PvalueThreshold & res.summary$r.squared > RsquareThreshold) {
-                    FunctionalProbes <- c(FunctionalProbes, uniqueProbes[i])
-                    break
-                  }
-                }
-                setTxtProgressBar(pb, i)
-            }
-        } else {
-            # set up a progress bar
-            progress <- function(n) setTxtProgressBar(pb, n)
-            opts <- list(progress = progress)
-            i <- NULL  # to avoid 'no visible binding for global variable' in R CMD check
-            FunctionalProbes <- foreach::foreach(i = 1:length(uniqueProbes), .combine = "c",
-                .options.snow = opts) %dopar% {
-                probe <- NULL
-                tmpGenes <- ProbeAnnotation$gene[which(ProbeAnnotation$probe == uniqueProbes[i])]
-                for (gene in tmpGenes) {
-                  res <- lm(gene.expression.data[gene, ] ~ methylation.data[uniqueProbes[i],
-                    ])
-                  res.summary <- summary(res)
-                  if (res$coefficients[2] < 0 & res.summary$coefficients[2, 4] <
-                    PvalueThreshold & res.summary$r.squared > RsquareThreshold) {
-                    probe <- uniqueProbes[i]
-                    break
-                  }
-                }
-                probe
-            }
-            close(pb)
-        }
-        FunctionalProbes <- unique(FunctionalProbes)
-        cat("\nFound", length(FunctionalProbes), "transcriptionally predictive probes.\n")
-    } else {
-        # No regression filter, but keep genes present in both methylation and
-        # gene expression data, as the ones returned by the regression filter
-        FunctionalProbes <- uniqueProbes
-    }
-    return(FunctionalProbes)
-}
 
 #' getRoadMapEnhancerProbes
 #' @details get the CpG probes that locate at the enhancer regions identified by the Roadmap epigenomics project

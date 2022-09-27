@@ -25,15 +25,17 @@ NULL
 #' @description EpiMix uses a model-based approach to identify functional changes DNA methylation that affect gene expression.
 #' @param methylation.data Matrix of the DNA methylation data with CpGs in rows and samples in columns.
 #' @param gene.expression.data  Matrix of the gene expression data with genes in rows and samples in columns.
-#' @param mode Character string indicating the analytic mode to model DNA methylation.
-#' Should be one of the followings: 'Regular', 'Enhancer', 'miRNA' or 'lncRNA'. Default: 'Regular'. See details for more information.
 #' @param sample.info Dataframe that maps each sample to a study group.
 #' Should contain two columns: the first column (named 'primary') indicates the sample names, and the second column (named 'sample.type') indicating which study group each sample belongs to (e.g.,“Cancer” vs. “Normal”,  “Experiment” vs. “Control”). Sample names in the 'primary' column must coincide with the column names of the methylation.data.
 #' @param group.1 Character vector indicating the name(s) for the experiment group.
 #' @param group.2 Character vector indicating the names(s) for the control group.
+#' @param mode Character string indicating the analytic mode to model DNA methylation.
+#' Should be one of the followings: 'Regular', 'Enhancer', 'miRNA' or 'lncRNA'. Default: 'Regular'. See details for more information.
 #' @param promoters Logic indicating whether to focus the analysis on CpGs associated with promoters (2000 bp upstream and 1000 bp downstream of the transcription start site). This parameter is only used for the Regular mode.
+#' @param correlation Character vector indicating the expected correlation between DNA methylation and gene expression. Can be either 'negative' or 'positive'. Default: 'negative'.
 #' @param met.platform Character string indicating the microarray type for collecting the DNA methylation data. The value should be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'
 #' @param genome Character string indicating the genome build version to be used for CpG annotation. Should be either 'hg19' or 'hg38'. Default: 'hg38'.
+#' @param cluster Logic indicating whether to cluster CpG site based on methylation levels using hierarchical clustering
 #' @param listOfGenes Character vector used for filtering the genes to be evaluated.
 #' @param filter Logic indicating whether to use a linear regression filter to pre-filter the CpGs whose methyhlation correlates with gene expression. Used in the Regular mode. Default: TRUE.
 #' @param raw.pvalue.threshold Numeric value indicating the threshold of the raw P value for selecting the functional CpG-gene pairs. Default: 0.05.
@@ -125,8 +127,8 @@ NULL
 #'                        OutputRoot = tempdir())
 #'}
 
-EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sample.info,
-    group.1, group.2, promoters = FALSE, met.platform = "HM450", genome = "hg38",
+EpiMix <- function(methylation.data, gene.expression.data, sample.info,
+    group.1, group.2, mode = "Regular", promoters = FALSE, correlation = "negative", met.platform = "HM450", genome = "hg38", cluster = FALSE,
     listOfGenes = NULL, filter = TRUE, raw.pvalue.threshold = 0.05, adjusted.pvalue.threshold = 0.05,
     numFlankingGenes = 20, roadmap.epigenome.groups = NULL, roadmap.epigenome.ids = NULL,
     chromatin.states = c("EnhA1", "EnhA2", "EnhG1", "EnhG2"), NoNormalMode = FALSE,
@@ -218,12 +220,19 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         overlapProbes <- unique(intersect(ProbeAnnotation$probe, rownames(methylation.data)))
         methylation.data <- methylation.data[overlapProbes, , drop = FALSE]
 
+        ### Optional: cluster CpGs based on hierarchical clustering
+        if(cluster){
+          cluster_results <- ClusterProbes(methylation.data, ProbeAnnotation, CorThreshold = 0.4)
+          methylation.data <- cluster_results$MET_data_clustered
+          probeMapping <- cluster_results$ProbeMapping
+        }
+
         ### Step 2: modeling the gene expression using the methylation data
         ### (beta values scale) to select functional probes
         FunctionalProbes <- NULL
         if (is.null(MixtureModelResults) & !is.null(gene.expression.data)) {
             FunctionalProbes <- EpiMix_ModelGeneExpression(methylation.data, gene.expression.data,
-                ProbeAnnotation, cores = cores, filter = filter)
+                ProbeAnnotation, cores = cores, filter = filter, cluster = cluster, correlation = correlation)
             if (length(FunctionalProbes) == 0) {
                 stop("No transcriptionally predicitve CpGs were found.")
             }
@@ -264,6 +273,16 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
                 mode, ".rds"))
         }
 
+        ### Optional: If CpGs were clustered, transform MethylMixResults
+        if(cluster){
+          MethylMixResults <- translateMethylMixResults(MethylMixResults, probeMapping)
+        }
+
+        # Save the sample names for the experiment and the control groups (used for
+        # the EpiMix_plotModel function)
+        MethylMixResults$group.1 <- colnames(MET_Experiment)
+        MethylMixResults$group.2 <- colnames(MET_Control)
+
         ### Step 6: select functional CpGs and calculate prevalence and fold
         ### change
         MET_matrix <- MethylMixResults$MethylationStates
@@ -281,7 +300,7 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         ### Step 7: modeling the gene expression and select the functional probes
         cat("Identifying functional CpG-gene pairs...\n")
         FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
-            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores)
+            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, correlation = correlation)
         if (is.null(FunctionalPairs)) {
             cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
             prev.data <- addGeneNames(prev.data, ProbeAnnotation)
@@ -350,6 +369,11 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
                 mode, ".rds"))
         }
 
+        # Save the sample names for the experiment and the control groups (used for
+        # the EpiMix_plotModel function)
+        MethylMixResults$group.1 <- colnames(MET_Experiment)
+        MethylMixResults$group.2 <- colnames(MET_Control)
+
         ### Step 5: select functional CpGs and calculate prevalence and fold
         ### change
         MET_matrix <- MethylMixResults$MethylationStates
@@ -367,7 +391,7 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         ### Step 6: identify transcriptionally predictive probes
         cat("Identifying functional CpG-gene pairs...\n")
         FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
-            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, mode = mode)
+            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, mode = mode, correlation = correlation)
         if (is.null(FunctionalPairs)) {
             cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
             prev.data <- addGeneNames(prev.data, ProbeAnnotation)
@@ -426,6 +450,11 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         }
         cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated probes\n")
 
+        # Save the sample names for the experiment and the control groups (used for
+        # the EpiMix_plotModel function)
+        MethylMixResults$group.1 <- colnames(MET_Experiment)
+        MethylMixResults$group.2 <- colnames(MET_Control)
+
         ### Step 5: select functional CpGs and calculate prevalence and fold
         ### change
         MET_matrix <- MethylMixResults$MethylationStates
@@ -443,7 +472,7 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         ### Step 6: identify transcriptionally predictive probes
         cat("Identifying functional CpG-gene pairs...\n")
         FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
-            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores)
+            ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, correlation = correlation)
         if (is.null(FunctionalPairs)) {
             cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
             prev.data <- addGeneNames(prev.data, ProbeAnnotation)
@@ -511,6 +540,11 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
             }
         }
         cat("Found", length(MethylMixResults$MethylationDrivers), "differentially methylated CpGs\n")
+
+        # Save the sample names for the experiment and the control groups (used for
+        # the EpiMix_plotModel function)
+        MethylMixResults$group.1 <- colnames(MET_Experiment)
+        MethylMixResults$group.2 <- colnames(MET_Control)
 
         # Calculate the prevalence for differential DNAme
         MET_matrix <- MethylMixResults$MethylationStates
@@ -598,16 +632,13 @@ EpiMix <- function(methylation.data, gene.expression.data, mode = "Regular", sam
         MethylMixResults$FunctionalPairs <- FunctionalPairs
     }
 
+    #--------------------------------------------Postprocessing-------------------------------------------------------------------
+
     if (!is.null(MethylMixResults$FunctionalPairs)) {
         cat("Found", nrow(MethylMixResults$FunctionalPairs), "functional probe-gene pairs.\n")
         MethylMixResults$FunctionalPairs <- MethylMixResults$FunctionalPairs[order(MethylMixResults$FunctionalPairs$Gene),
             ]
     }
-
-    # Save the sample names for the experiment and the control groups (used for
-    # the EpiMix_plotModel function)
-    MethylMixResults$group.1 <- colnames(MET_Experiment)
-    MethylMixResults$group.2 <- colnames(MET_Control)
 
     # Save the output
     if (!is.null(OutputRoot) & OutputRoot != "") {
