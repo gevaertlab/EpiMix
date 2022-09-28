@@ -7,11 +7,11 @@
 ClusterProbes(MET_data, ProbeAnnotation, CorThreshold = 0.4)
 }
 \arguments{
+\item{MET_data}{data matrix for methylation.}
+
+\item{ProbeAnnotation}{GRange object for probe annoation.}
+
 \item{CorThreshold}{correlation threshold for cutting the clusters.}
-
-\item{MET_Cancer}{data matrix for cancer samples.}
-
-\item{MET_Normal}{data matrix for normal samples.}
 }
 \value{
 List with the clustered data sets and the mapping between probes and genes.

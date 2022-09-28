@@ -31,6 +31,8 @@ generateFunctionalPairs(
 
 \item{cores}{number of computational cores}
 
+\item{mode}{character string indicating the analytic mode}
+
 \item{correlation}{the expected relationship between DNAme and gene expression}
 }
 \value{

@@ -43,6 +43,7 @@ NULL
 #' @param raw.pvalue.threshold raw p value threshold
 #' @param adjusted.pvalue.threshold  adjusted p value threshold
 #' @param cores number of computational cores
+#' @param mode character string indicating the analytic mode
 #' @param correlation the expected relationship between DNAme and gene expression
 #'
 #' @return a dataframe of functional CpG-gene matrix
@@ -65,7 +66,6 @@ generateFunctionalPairs <- function(MET_matrix, MET_Control, gene.expression.dat
   FunctionalPairs <- data.frame()
   if (cores == "" | cores == 1) {
     for (i in seq_len(iterations)) {
-      print(i)
       gene <- uniqueGenes[i]
       probes <- ProbeAnnotation$probe[which(ProbeAnnotation$gene == gene)]
       pairs <- getFunctionalProbes(gene, probes, MET_matrix, gene.expression.data,
@@ -105,6 +105,7 @@ generateFunctionalPairs <- function(MET_matrix, MET_Control, gene.expression.dat
 getFunctionalProbes <- function(gene, probes, MET_matrix, gene.expression.data, correlation = "negative",
                                 raw.pvalue.threshold = 0.05, adjusted.pvalue.threshold = 0.01) {
 
+  valid.probes <- c()
   mRNA.fold.change <- c()
   comparisons <- c()
   p <- c()
@@ -118,16 +119,19 @@ getFunctionalProbes <- function(gene, probes, MET_matrix, gene.expression.data, 
       low.met.samples <- names(DM_values[DM_values == 0])
       expr.low.values <- as.numeric(gene.expression.data[gene, high.met.samples])  # high methylation, low gene expression
       expr.high.values <- as.numeric(gene.expression.data[gene, low.met.samples])  # low methylation, high gene expression
+      if (length(expr.high.values) < 3 || length(expr.low.values)< 3) next
       fold_change <- round(mean(expr.low.values)/mean(expr.high.values), 3)
       cmp <- "hyper vs normal"
-      p_value <- wilcox.test(expr.high.values, expr.low.values, alternative = ifelse(correlation ==
-                                                                                       "negative", "greater", "less"), exact = FALSE)$p.value
+      p_value <- wilcox.test(expr.high.values,
+                                      expr.low.values,
+                                      alternative = ifelse(correlation == "negative", "greater", "less"), exact = FALSE)$p.value
 
     } else if (state == "Dual") {
       high.met.samples <- names(DM_values[DM_values > 0])
       low.met.samples <- names(DM_values[DM_values < 0])
       expr.low.values <- as.numeric(gene.expression.data[gene, high.met.samples])  # high methylation, low gene expression
       expr.high.values <- as.numeric(gene.expression.data[gene, low.met.samples])  # low methylation, high gene expression
+      if (length(expr.high.values) < 3 || length(expr.low.values)< 3) next
       fold_change <- round(mean(expr.high.values)/mean(expr.low.values), 3)
       cmp <- "hypo vs hyper"
       p_value <- wilcox.test(expr.high.values, expr.low.values, alternative = ifelse(correlation ==
@@ -137,12 +141,14 @@ getFunctionalProbes <- function(gene, probes, MET_matrix, gene.expression.data, 
       low.met.samples <- names(DM_values[DM_values < 0])
       expr.low.values <- as.numeric(gene.expression.data[gene, high.met.samples])  # high methylation, low gene expression
       expr.high.values <- as.numeric(gene.expression.data[gene, low.met.samples])  # low methylation, high gene expression
+      if (length(expr.high.values) < 3 || length(expr.low.values)< 3) next
       fold_change <- round(mean(expr.high.values)/mean(expr.low.values), 3)
       cmp <- "hypo vs normal"
       p_value <- wilcox.test(expr.high.values, expr.low.values, alternative = ifelse(correlation ==
                                                                                        "negative", "greater", "less"), exact = FALSE)$p.value
     }
 
+    valid.probes <- append(valid.probes, probe)
     mRNA.fold.change <- append(mRNA.fold.change, fold_change)
     comparisons <- append(comparisons, cmp)
     p <- append(p, p_value)
@@ -150,7 +156,8 @@ getFunctionalProbes <- function(gene, probes, MET_matrix, gene.expression.data, 
 
   # produce a dataframe for gene expression with methylation state and
   # prevalence information
-  dataDEGs <- data.frame(Gene = rep(gene, length(probes)), Probe = probes)
+  dataDEGs <- data.frame(Gene = rep(gene, length(valid.probes)), Probe = valid.probes)
+  if(nrow(dataDEGs) == 0) return(NULL)
   dataDEGs["Fold change of gene expression"] <- mRNA.fold.change
   dataDEGs["Comparators"] <- comparisons
   dataDEGs["Raw.p"] <- p

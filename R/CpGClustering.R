@@ -6,8 +6,8 @@
 #' Probes with SNPs are removed.
 #' This function is prepared to run in parallel if the user registers a parallel structure, otherwise it runs sequentially.
 #' This function also cleans up the sample names, converting them to the 12 digit format.
-#' @param MET_Cancer data matrix for cancer samples.
-#' @param MET_Normal data matrix for normal samples.
+#' @param MET_data data matrix for methylation.
+#' @param ProbeAnnotation GRange object for probe annoation.
 #' @param CorThreshold correlation threshold for cutting the clusters.
 #' @return List with the clustered data sets and the mapping between probes and genes.
 #' @export

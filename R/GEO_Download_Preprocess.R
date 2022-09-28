@@ -270,7 +270,7 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC
         MET_Experiment <- GEO_EstimateMissingValues_Methylation(MET_Experiment, MissingValueThresholdGene,
             MissingValueThresholdSample)
     }
-    if (!is.null(MET_Control) & ncol(MET_Control) > 0 & sum(is.na(MET_Control)) >
+    if (!is.null(MET_Control) & sum(is.na(MET_Control)) >
         0) {
         cat("\tMissing value estimation on group.2...\n")
         MET_Control <- GEO_EstimateMissingValues_Methylation(MET_Control, MissingValueThresholdGene,
@@ -291,7 +291,7 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC
         cat("Performing batch correction on group.1...\n")
         MET_Experiment <- CorrectBatchEffect(MET_Experiment, BatchData, batch.correction.method,
             MinInBatch = MinInBatch, featurePerSet = 50000)
-        if (!is.null(MET_Control) & ncol(MET_Control) > 0) {
+        if (!is.null(MET_Control) && ncol(MET_Control) > 0) {
             cat("Performing batch correction on group.2...\n")
             MET_Control <- CorrectBatchEffect(MET_Control, BatchData, batch.correction.method,
                 MinInBatch = MinInBatch, featurePerSet = 50000)
@@ -310,7 +310,7 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC
 
 
     ### Step 6: combine MET_Experiment and MET_Control into one matrix
-    if (!is.null(MET_Control) & ncol(MET_Control) > 0) {
+    if (!is.null(MET_Control) && ncol(MET_Control) > 0) {
         overlapProbes <- intersect(rownames(MET_Experiment), rownames(MET_Control))
         cat("Found", length(overlapProbes), "overlapping probes between group.1 and group.2 after preprocessing...\n")
         MET_Experiment <- MET_Experiment[overlapProbes, , drop = FALSE]
