@@ -62,6 +62,6 @@ Suggests:
   RUnit,
   BiocGenerics
 biocViews: Software, Epigenetics, Preprocessing, DNAMethylation, GeneExpression, DifferentialMethylation
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 BugReports: https://github.com/gevaertlab/EpiMix/issues

@@ -12,7 +12,7 @@ get_firehoseData(
   dataFileTag = "mRNAseq_Preprocess.Level_3",
   FFPE = FALSE,
   fileType = "tar.gz",
-  gdacURL = "http://gdac.broadinstitute.org/runs/",
+  gdacURL = "https://gdac.broadinstitute.org/runs/",
   untarUngzip = TRUE,
   printDisease_abbr = FALSE
 )
