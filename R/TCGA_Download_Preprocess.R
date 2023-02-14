@@ -52,7 +52,7 @@ TCGA_Download_DNAmethylation <- function(CancerSite, TargetDirectory, downloadDa
 #'
 get_firehoseData <- function(downloadData = TRUE, saveDir = "./", TCGA_acronym_uppercase = "LUAD",
     dataType = "stddata", dataFileTag = "mRNAseq_Preprocess.Level_3", FFPE = FALSE,
-    fileType = "tar.gz", gdacURL = "http://gdac.broadinstitute.org/runs/", untarUngzip = TRUE,
+    fileType = "tar.gz", gdacURL = "https://gdac.broadinstitute.org/runs/", untarUngzip = TRUE,
     printDisease_abbr = FALSE) {
 
     # Cases Shipped by BCR # Cases with Data* Date Last Updated (mm/dd/yy)
