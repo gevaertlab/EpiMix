@@ -231,7 +231,7 @@ EpiMix <- function(methylation.data, gene.expression.data, sample.info,
         ### (beta values scale) to select functional probes
         FunctionalProbes <- NULL
         if (is.null(MixtureModelResults) & !is.null(gene.expression.data)) {
-            FunctionalProbes <- EpiMix_ModelGeneExpression(methylation.data, gene.expression.data,
+            FunctionalProbes <- filterLinearProbes(methylation.data, gene.expression.data,
                 ProbeAnnotation, cores = cores, filter = filter, cluster = cluster, correlation = correlation)
             if (length(FunctionalProbes) == 0) {
                 stop("No transcriptionally predicitve CpGs were found.")
@@ -299,7 +299,7 @@ EpiMix <- function(methylation.data, gene.expression.data, sample.info,
 
         ### Step 7: modeling the gene expression and select the functional probes
         cat("Identifying functional CpG-gene pairs...\n")
-        FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
+        FunctionalPairs <- generateFunctionalPairs(MET_matrix, colnames(MET_Control), gene.expression.data,
             ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, correlation = correlation)
         if (is.null(FunctionalPairs)) {
             cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
@@ -325,12 +325,6 @@ EpiMix <- function(methylation.data, gene.expression.data, sample.info,
         cat("Running", mode, "mode...\n")
         cat("Please be mindful that the gene expression data are expected to be data obtained from microRNA-seq.\n")
         ### Step 1: filter CpGs based on user-specified conditions
-
-        # Convert precursor name (hsa-XXX) to human gene sysmbol(MIRXXX)
-        if(sum(startsWith(rownames(gene.expression.data), "hsa")) == nrow(gene.expression.data)){
-          mapping = mapTranscriptToGene(rownames(gene.expression.data))
-          rownames(gene.expression.data) <- mapping$Gene_name
-        }
 
         ProbeAnnotation <- filterProbes(mode = mode, gene.expression.data = gene.expression.data,
             listOfGenes = listOfGenes, promoters = promoters, met.platform = met.platform,
@@ -390,7 +384,7 @@ EpiMix <- function(methylation.data, gene.expression.data, sample.info,
 
         ### Step 6: identify transcriptionally predictive probes
         cat("Identifying functional CpG-gene pairs...\n")
-        FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
+        FunctionalPairs <- generateFunctionalPairs(MET_matrix, colnames(MET_Control), gene.expression.data,
             ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, mode = mode, correlation = correlation)
         if (is.null(FunctionalPairs)) {
             cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
@@ -471,7 +465,7 @@ EpiMix <- function(methylation.data, gene.expression.data, sample.info,
 
         ### Step 6: identify transcriptionally predictive probes
         cat("Identifying functional CpG-gene pairs...\n")
-        FunctionalPairs <- generateFunctionalPairs(MET_matrix, MET_Control, gene.expression.data,
+        FunctionalPairs <- generateFunctionalPairs(MET_matrix, colnames(MET_Control), gene.expression.data,
             ProbeAnnotation, raw.pvalue.threshold, adjusted.pvalue.threshold, cores, correlation = correlation)
         if (is.null(FunctionalPairs)) {
             cat("Not enough differentially methylated genes or not sufficient gene expression data, returning EpiMix results...\n")
@@ -563,7 +557,7 @@ EpiMix <- function(methylation.data, gene.expression.data, sample.info,
         ### Step 4: modeling the gene expression and select the functional
         ### enhancer probes
         cat("Modeling the gene expression for enhancers...\n")
-        MET_matrix <- filterMethMatrix(MET_matrix = MET_matrix, MET_Control = MET_Control,
+        MET_matrix <- filterMethMatrix(MET_matrix = MET_matrix, control.names = colnames(MET_Control),
             gene.expression.data = gene.expression.data)
 
         if (length(MET_matrix) == 0) {
@@ -585,7 +579,6 @@ EpiMix <- function(methylation.data, gene.expression.data, sample.info,
             numFlankingGenes = numFlankingGenes)
 
         # Find functional CpGs
-
         cat("Looking for differentially methylated enhancers associated with gene expression\n")
         iterations <- length(DM.probes)
         pb <- utils::txtProgressBar(max = iterations, style = 3)

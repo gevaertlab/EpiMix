@@ -155,8 +155,6 @@ getMethStates_Helper <- function(DMValues) {
     return(state)
 }
 
-
-
 #' The splitmatix function
 #'
 #' @param x A matrix
@@ -188,8 +186,7 @@ get.prevalence <- function(MethylMixResults) {
         100, 3))
     hyper_prev <- apply(MET_matrix, 1, function(x) round(length(x[x > 0])/length(x) *
         100, 3))
-    states <- getMethStates(MethylMixResults, rownames(MET_matrix))
-    prev.data <- data.frame(Probe = rownames(MET_matrix), State = states, row.names = NULL)
+    prev.data <- data.frame(Probe = rownames(MET_matrix), row.names = NULL)
     prev.data["Prevalence of hypo (%)"] <- hypo_prev
     prev.data["Prevalence of hyper (%)"] <- hyper_prev
     return(prev.data)
@@ -248,152 +245,19 @@ getRandomGenes <- function(target.probe, gene.expression.data, ProbeAnnotation,
     return(random.genes)
 }
 
-#' The get.comparators function
-#' @description Helper function to generate the string indicating the comparisons of gene expression. Used for generating the functional CpG-gene pair matrix.
-#' @param state the methylation state of a CpG site. Can be either 'Hyper', 'Hypo' or 'Dual'.
-#' @keywords internal
-#' @return a string indicating the comparisions for gene expression.
-
-get.comparators <- function(state) {
-    if (state == "Hyper") {
-        cmp <- "hyper vs normal"
-    } else if (state == "Dual") {
-        cmp <- "hypo vs hyper"
-    } else {
-        cmp <- "hypo vs normal"
-    }
-    return(cmp)
-}
-
-
-#' The model.gene.expression function
-#' @description obtain a dataframe with the fold change of gene expression and signifcant p values
-#' @param target.probe character string indicating the target CpG site.
-#' @param MET_matrix combined methylation state matrix for both case and control groups.
-#' @param gene.expression.data a matrix with gene expression data.
-#' @param target.genes character vector with the names of the genes associated with the target CpGs.
-#' @param correlation character indicating the direction of correlation between the methylation state of the CpG site and the gene expression levels. Can be either 'negative' or 'positive'.
-#' @param calculate.fold.change logic indicating whether to calculate fold change between different mixtures
-#' @keywords internal
-#'
-#' @return a dataframe with fold change of gene expression and p values.
-#'
-model.gene.expression <- function(target.probe, MET_matrix, gene.expression.data,
-                                  target.genes, correlation = "negative", calculate.fold.change = TRUE) {
-
-  DM_values <- MET_matrix[target.probe, ]
-  state <- getMethStates_Helper(DM_values)
-  high.met.samples <- which(DM_values == max(DM_values))
-  low.met.samples <- which(DM_values == min(DM_values))
-  Exps <- gene.expression.data[target.genes, , drop = FALSE]
-  if (length(Exps) == 0)
-    return(NULL)
-  # calculate raw p values
-  test.p <- unlist(lapply(splitmatrix(Exps), function(x) {
-    wilcox.test(x[low.met.samples], x[high.met.samples], alternative = ifelse(correlation ==
-                                                                                "negative", "greater", "less"), exact = FALSE)$p.value
-  }))
-  res <- data.frame(Gene = target.genes, test.p = test.p[match(target.genes, names(test.p))],
-                    stringsAsFactors = FALSE)
-  if (calculate.fold.change) {
-    fold.change <- unlist(lapply(splitmatrix(Exps), function(x) {
-      if (state == "Hyper") {
-        round(mean(x[high.met.samples])/mean(x[low.met.samples]), 3)
-      } else if (state == "Dual") {
-        round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
-      } else {
-        round(mean(x[low.met.samples])/mean(x[high.met.samples]), 3)
-      }
-    }))
-    res$fold_change <- fold.change[match(target.genes, names(fold.change))]
-  }
-  return(res)
-}
-
-
-#' The getFunctionalGenes function
-#' @description Helper function to assess if the methylation of a probe is reversely correlated with the expression of its nearby genes.
-#' @details This function is probe-centered, which is used in the enhancer mode and the miRNA mode of EpiMix.
-#' @param target.probe character string indicating the probe to be evaluated.
-#' @param target.genes character vector indicating the nearby genes of the target probe.
-#' @param MET_matrix methylation data matrix for CpGs from group.1 and group.2.
-#' @param gene.expression.data gene expression data matrix.
-#' @param ProbeAnnotation GRange object of CpG probe annotation.
-#' @param raw.pvalue.threshold raw p value from testing DNA methylation and gene expression
-#' @param adjusted.pvalue.threshold adjusted p value from testing DNA methylation and gene expression
-#' @keywords internal
-#' @return dataframe with functional probe-gene pair and p values from the Wilcoxon test for methylation and gene expression.
-#'
-getFunctionalGenes <- function(target.probe, target.genes, MET_matrix, gene.expression.data,
-    ProbeAnnotation, raw.pvalue.threshold = 0.05, adjusted.pvalue.threshold = 0.01) {
-
-    # get fold changes and raw p values
-    raw.pvals <- model.gene.expression(target.probe = target.probe, MET_matrix = MET_matrix,
-        gene.expression.data = gene.expression.data, target.genes = target.genes,
-        correlation = "negative", calculate.fold.change = TRUE)
-
-
-    if (is.null(raw.pvals))
-        return(NULL)
-    # get permutation p values
-    random.genes <- getRandomGenes(target.probe = target.probe, gene.expression.data = gene.expression.data,
-        ProbeAnnotation, genome = "hg38", perm = 1000)
-    perm.pvals <- model.gene.expression(target.probe = target.probe, MET_matrix = MET_matrix,
-        gene.expression.data = gene.expression.data, target.genes = random.genes,
-        correlation = "negative", calculate.fold.change = FALSE)
-
-    state <- getMethStates_Helper(MET_matrix[target.probe, ])
-    cmp <- get.comparators(state)
-    dataDEGs <- data.frame(Gene = raw.pvals$Gene, Probe = rep(target.probe, length(raw.pvals$Gene)),
-        fold_change = raw.pvals$fold_change, Comparators = rep(cmp, length(raw.pvals$Gene)),
-        Raw.p = raw.pvals$test.p)
-    dataDEGs <- Get.Pvalue.p(dataDEGs, perm.pvals)
-    dataDEGs <- dataDEGs[which(dataDEGs$Raw.p < raw.pvalue.threshold & dataDEGs$Adjusted.p <
-        adjusted.pvalue.threshold), ]
-    colnames(dataDEGs) <- c("Gene", "Probe", "Fold change of gene expression", "Comparators",
-        "Raw.p", "Adjusted.p")
-    dataDEGs <- dplyr::distinct(dataDEGs)
-    return(dataDEGs)
-}
-
-#' Calculate empirical Pvalue
-#' @param U.matrix A data.frame of raw pvalue from U test. Output from .Stat.nonpara
-#' @param permu data frame of permutation. Output from .Stat.nonpara.permu
-#' @return A data frame with empirical Pvalue.
-Get.Pvalue.p <- function(U.matrix, permu) {
-    .Pvalue <- function(x, permu) {
-        Gene <- as.character(x["Gene"])
-        Raw.p <- as.numeric(x["Raw.p"])
-        if (is.na(Raw.p)) {
-            out <- NA
-        } else {
-            # num( Pp <= Pr) + 1 Pe = --------------------- x + 1 Pp = pvalue
-            # probe (Raw.p) Pr = pvalue random probe (permu matrix) We have to
-            # consider that floating Point Numbers are Inaccurate
-            out <- (sum(permu$test.p - Raw.p < 10^-100, na.rm = TRUE) + 1)/(sum(!is.na(permu$test.p)) +
-                1)
-        }
-        return(out)
-    }
-    # message('Calculating empirical P value.\n')
-    Pvalue <- unlist(apply(U.matrix, 1, .Pvalue, permu = permu))
-    U.matrix$Adjusted.p <- Pvalue
-    return(U.matrix)
-}
-
 #' The filterMethMatrix function
 #' @details This function filters methylation states from the beta mixture modeling for each probe. The filtered probes can be used to model gene expression by Wilcoxon test.
 #' @param MET_matrix a matrix of methylation states from the EpiMix results
-#' @param MET_Control a matrix of DNA methylation data for the control group
+#' @param control.names a character vector of control sample names
 #' @param gene.expression.data a matrix with gene expression data
 #' @keywords internal
 #' @return a matrix of methylation states for each differentially methylated probe with probes in rows and patient in columns.
 #'
-filterMethMatrix <- function(MET_matrix, MET_Control, gene.expression.data) {
+filterMethMatrix <- function(MET_matrix, control.names, gene.expression.data) {
     # Combine the methylation states for the experiment group and the control
     # group into one matrix
-    MET_matrix_control <- matrix(0, nrow(MET_matrix), ncol(MET_Control))
-    colnames(MET_matrix_control) <- colnames(MET_Control)
+    MET_matrix_control <- matrix(0, nrow(MET_matrix), length(control.names))
+    colnames(MET_matrix_control) <- control.names
     MET_matrix <- cbind(MET_matrix, MET_matrix_control)
 
     # Filter 1: filter on samples which have gene expression data available

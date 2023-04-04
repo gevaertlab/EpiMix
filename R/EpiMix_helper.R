@@ -17,14 +17,11 @@ filterProbes <- function(mode, gene.expression.data, listOfGenes, promoters, met
     ProbeAnnotation <- getProbeAnnotation(mode = mode, met.platform = met.platform,
         genome = genome)
     if (!is.null(listOfGenes)) {
-        warning("Please input the selected gene names in the upper case format: e.g., IGF1,  CCND3, MIRLET7A1, MIR10226, LINC01409, TTLL10-AS1",
-            immediate. = TRUE)
        ProbeAnnotation <- ProbeAnnotation[which(ProbeAnnotation$gene %in% listOfGenes),]
        cat("Found", length(unique(ProbeAnnotation$probe)), "CpGs associated with the user-specified genes.\n")
     }
     if (!is.null(gene.expression.data)) {
-        # we only select the CpGs associated with genes with expression
-        # data available
+        # restrict the CpGs associated with genes whose transcription data are available
        ProbeAnnotation <- ProbeAnnotation[ProbeAnnotation$gene %in% rownames(gene.expression.data), ]
     }
     if (promoters) {

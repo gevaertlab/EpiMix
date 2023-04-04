@@ -24,7 +24,7 @@ a list with two elements. The first element ('$GeneExpressionData') indicating t
 Download the gene expression data and the associated sample phenotypic data from the GEO database.
 }
 \examples{
-{
+\donttest{
 GEdirectories <- GEO_Download_GeneExpression(AccessionID = 'GSE114065',
                                              targetDirectory = tempdir())
 }

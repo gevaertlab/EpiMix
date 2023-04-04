@@ -569,7 +569,36 @@ EpiMix_PlotSurvival(EpiMixResults = Sample_EpiMixResults_miRNA,
                                      TCGA_CancerSite = CancerSite)
 ```
 
-## 10. Session Information
+## 10. Find potential miRNA targets
+
+Find miRNA targets whose transcription levels are associated with the differential methylation of miRNAs:
+1. Hyper-methylation miRNA -> upregulation of targets
+2. Hypo-methylation miRNA -> downregulation of targets
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+library(multiMiR)
+library(miRBaseConverter)
+
+miRNA_targets <- find_miRNA_targets(
+ EpiMixResults = Sample_EpiMixResults_miRNA,
+ geneExprData = mRNA.data
+)
+```
+
+```{r message=FALSE, warning=FALSE}
+datatable(miRNA_targets[1:5, ],
+          options = list(scrollX = TRUE, 
+                         autoWidth = TRUE,
+                         keys = TRUE, 
+                         pageLength = 5, 
+                         rownames= FALSE,
+                         digits = 3), 
+                         rownames = FALSE)
+```
+
+Now, the `Fold change of gene expression` column indicates the change of gene expression for the miRNA targets, where the comparisions were made between patients with different methylation states for the corresponding miRNAs.
+
+## 11. Session Information
 
 ```{r}
 sessionInfo()

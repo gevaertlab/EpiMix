@@ -6,7 +6,7 @@
 \usage{
 generateFunctionalPairs(
   MET_matrix,
-  MET_Control,
+  control.names,
   gene.expression.data,
   ProbeAnnotation,
   raw.pvalue.threshold,
@@ -19,7 +19,7 @@ generateFunctionalPairs(
 \arguments{
 \item{MET_matrix}{matrix of methylation states}
 
-\item{MET_Control}{beta values of control groups}
+\item{control.names}{character vector indicating the samples names in the control group}
 
 \item{gene.expression.data}{matrix of gene expression data}
 
@@ -39,5 +39,5 @@ generateFunctionalPairs(
 a dataframe of functional CpG-gene matrix
 }
 \description{
-Wrapper function to get functional CpG-gene pairs
+Wrapper function to get functional CpG-gene pairs, used for Regular, miRNA and lncRNA modes
 }

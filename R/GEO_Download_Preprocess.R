@@ -3,9 +3,6 @@
 #'@importFrom Biobase exprs pData phenoData
 NULL
 
-#' @importFrom GEOquery getGEO
-NULL
-
 #' @importFrom biomaRt useDataset getBM
 NULL
 
@@ -28,6 +25,11 @@ GEO_Download_DNAMethylation <- function(AccessionID, targetDirectory = ".", Down
 
     # set the environmental variable to deal with the long file name issue
     # Sys.setenv('VROOM_CONNECTION_SIZE' = 131072 * 100)
+    if (!requireNamespace("GEOquery")) {
+      message("This function requires the 'GEOquery' package.")
+      return(invisible())
+    }
+
     dir_MET_data <- paste0(targetDirectory, "/", AccessionID, "_MET_data.rds")
     dir_Pheno_data <- paste0(targetDirectory, "/", AccessionID, "_Pheno_data.csv.gz")
     if (DownloadData) {
@@ -60,7 +62,7 @@ GEO_Download_DNAMethylation <- function(AccessionID, targetDirectory = ".", Down
 #' @export
 #' @keywords download
 #' @examples
-#' {
+#' \donttest{
 #' GEdirectories <- GEO_Download_GeneExpression(AccessionID = 'GSE114065',
 #'                                              targetDirectory = tempdir())
 #' }
@@ -69,6 +71,12 @@ GEO_Download_GeneExpression <- function(AccessionID, targetDirectory = ".", Down
 
     # set the environmental variable to deal with the long file name issue
     # Sys.setenv('VROOM_CONNECTION_SIZE' = 131072 * 100)
+
+    if (!requireNamespace("GEOquery")) {
+      message("This function requires the 'GEOquery' package.")
+      return(invisible())
+    }
+
     dir_expression_data <- paste0(targetDirectory, "/", AccessionID, "_expression_data.rds")
     dir_Pheno_data <- paste0(targetDirectory, "/", AccessionID, "_Pheno_data.csv.gz")
 
@@ -152,7 +160,7 @@ GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = ".
     return(sample.info)
 }
 
-#' The GEO_Preprocess_DNAMethylation function
+#' The Preprocess_DNAMethylation function
 #'
 #' @description Preprocess DNA methylation data from the GEO database.
 #' @details
@@ -186,7 +194,7 @@ GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = ".
 #' data(MET.data)
 #' data(LUAD.sample.annotation)
 #'
-#' Preprocessed_Data <- GEO_Preprocess_DNAMethylation(MET.data,
+#' Preprocessed_Data <- Preprocess_DNAMethylation(MET.data,
 #'                                                    met.platform = 'HM450',
 #'                                                    sample.info = LUAD.sample.annotation,
 #'                                                    group.1 = 'Cancer',
@@ -194,7 +202,7 @@ GEO_GetSampleInfo <- function(METdirectories, group.column, targetDirectory = ".
 #'
 #' }
 
-GEO_Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC",
+Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC",
     genome = "hg38", sample.info = NULL, group.1 = NULL, group.2 = NULL, sample.map = NULL,
     rm.chr = c("chrX", "chrY"), MissingValueThresholdGene = 0.2, MissingValueThresholdSample = 0.2,
     doBatchCorrection = FALSE, BatchData = NULL, batch.correction.method = "Seurat",
@@ -322,7 +330,7 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC
     }
 }
 
-#' The GEO_Preprocess_GeneExpression function
+#' The Preprocess_GeneExpression function
 #' @description Preprocess the gene expression data from the GEO database.
 #' @details
 #' The preprocessing pipeline includes:
@@ -349,13 +357,13 @@ GEO_Preprocess_DNAMethylation <- function(methylation.data, met.platform = "EPIC
 #' {
 #' data(mRNA.data)
 #' data(LUAD.sample.annotation)
-#' Preprocessed_Data <- GEO_Preprocess_GeneExpression(gene.expression.data = mRNA.data,
+#' Preprocessed_Data <- Preprocess_GeneExpression(gene.expression.data = mRNA.data,
 #'                                                    sample.info = LUAD.sample.annotation,
 #'                                                    group.1 = 'Cancer',
 #'                                                    group.2 = 'Normal')
 #' }
 
-GEO_Preprocess_GeneExpression <- function(gene.expression.data, sample.info = NULL,
+Preprocess_GeneExpression <- function(gene.expression.data, sample.info = NULL,
     group.1 = NULL, group.2 = NULL, sample.map = NULL, MissingValueThresholdGene = 0.3,
     MissingValueThresholdSample = 0.1, doBatchCorrection = FALSE, BatchData = NULL,
     batch.correction.method = "Seurat", cores = 1) {

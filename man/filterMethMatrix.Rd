@@ -4,12 +4,12 @@
 \alias{filterMethMatrix}
 \title{The filterMethMatrix function}
 \usage{
-filterMethMatrix(MET_matrix, MET_Control, gene.expression.data)
+filterMethMatrix(MET_matrix, control.names, gene.expression.data)
 }
 \arguments{
 \item{MET_matrix}{a matrix of methylation states from the EpiMix results}
 
-\item{MET_Control}{a matrix of DNA methylation data for the control group}
+\item{control.names}{a character vector of control sample names}
 
 \item{gene.expression.data}{a matrix with gene expression data}
 }
