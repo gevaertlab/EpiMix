@@ -31,7 +31,8 @@ EpiMix_PlotProbe(
 
 \item{met.platform}{character string indicating the type of micro-array where the DNA methylation data were collected.Can be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'}
 
-\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'}
+\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'. If the value is empty (""), no histone modifications plot will show.\
+Note: Keep this value empty if using the Windows system, since this feature is not supported in Windows.}
 
 \item{numFlankingGenes}{numeric value indicating the number of flanking genes to be plotted with the CpG probe. Default: 20 (10 gene upstream and 10 gene downstream).}
 

@@ -4,7 +4,8 @@
 #' @param gene.name character string indicating the name of the gene to be plotted.
 #' @param EpiMixResults the resulting list object returned from the function of EpiMix.
 #' @param met.platform character string indicating the type of the microarray where the DNA methylation data were collected. The value should be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'
-#' @param roadmap.epigenome.id character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'
+#' @param roadmap.epigenome.id character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'. If the value is empty (""), no histone modifications plot will show.\
+#' Note: Keep this value empty if using the Windows system, since this feature is not supported in Windows.
 #' @param left.gene.margin  numeric value indicating the number of extra nucleotide bases to be plotted on the left side of the target gene. Default: 10000.
 #' @param right.gene.margin numeric value indicating the number of extra nucleotide bases to be plotted on the right side of the target gene. Default: 10000.
 #' @param gene.name.font numeric value indicating the font size for the gene name. Default: 0.7.
@@ -219,51 +220,69 @@ EpiMix_PlotGene <- function(gene.name, EpiMixResults, met.platform = "HM450", ro
             0)], col = "red", pos = pos, offest = 0.3, cex = probe.name.font)
     }
 
-    # Plot two lines encompassing the differentially methylated CpG probes
-    # karyoploteR :: kpSegments(kp, chr=chr_name, x0=x[which(y!=0)]-20,
-    # x1=x[which(y!=0)]-20, y0=rep(r0_DMValue, length(x[which(y!=0)])), y1
-    # =rep(1, length(x[which(y!=0)]))) karyoploteR :: kpSegments(kp,
-    # chr=chr_name, x0=x[which(y!=0)]+20, x1=x[which(y!=0)]+20,
-    # y0=rep(r0_DMValue, length(x[which(y!=0)])), y1 =rep(1,
-    # length(x[which(y!=0)])))
 
     # Plot signals for histone marks and DNA binding proteins Construct a
     # vector with urls of the bigwig files
-    base_url <- "https://egg2.wustl.edu/roadmap/data/byFileType/signal/consolidated/macs2signal/pval/"
-    urlData <- RCurl::getURL(base_url)
-    urlData2 <- unlist(strsplit(urlData, "\\n"))
-    filenames <- as.matrix(urlData2[grep(roadmap.epigenome.id, urlData2)])
-    filenames <- unlist(strsplit(filenames, ">|<"))
-    filenames <- filenames[grep(roadmap.epigenome.id, filenames)]
-    filenames <- filenames[-grep("a href", filenames)]
-    DNA.binding <- character(0)
-    for (file in filenames) {
+    if(length(roadmap.epigenome.id) > 0){
+      cat("Retrieving signal intensity of histone marks and DNase sensitivity from RoadmapEpigenomics...\n")
+
+      base_url <- "https://egg2.wustl.edu/roadmap/data/byFileType/signal/consolidated/macs2signal/pval/"
+      urlData <- RCurl::getURL(base_url)
+      urlData2 <- unlist(strsplit(urlData, "\\n"))
+      filenames <- as.matrix(urlData2[grep(roadmap.epigenome.id, urlData2)])
+      filenames <- unlist(strsplit(filenames, ">|<"))
+      filenames <- filenames[grep(roadmap.epigenome.id, filenames)]
+      filenames <- filenames[-grep("a href", filenames)]
+      DNA.binding <- character(0)
+      for (file in filenames) {
         start <- unlist(gregexpr("-", file)) + 1
         end <- unlist(gregexpr("pval", file)) - 2
         protein.name <- substring(file, start, end)
         DNA.binding[protein.name] <- paste0(base_url, file)
-    }
+      }
 
-    r0_Histone <- r1_DMValue + 0.03
-    total.tracks <- length(DNA.binding)
-    colors <- RColorBrewer::brewer.pal(total.tracks, "Set3")
-    out.at <- karyoploteR::autotrack(1:total.tracks, total.tracks, margin = 0.3,
-        r0 = r0_Histone)
+      r0_Histone <- r1_DMValue + 0.03
+      total.tracks <- length(DNA.binding)
+      colors <- RColorBrewer::brewer.pal(total.tracks, "Set3")
+      out.at <- karyoploteR::autotrack(1:total.tracks, total.tracks, margin = 0.3,
+                                       r0 = r0_Histone)
 
-    karyoploteR::kpAddLabels(kp, labels = "Protein signals", r0 = out.at$r0, r1 = out.at$r1,
-        cex = y.label.font, srt = 90, pos = 1, label.margin = y.label.margin)
+      karyoploteR::kpAddLabels(kp, labels = "Protein signals", r0 = out.at$r0, r1 = out.at$r1,
+                               cex = y.label.font, srt = 90, pos = 1, label.margin = y.label.margin)
 
-    for (i in seq_len(total.tracks)) {
+      for (i in seq_len(total.tracks)) {
         at <- karyoploteR::autotrack(i, total.tracks, r0 = out.at$r0, r1 = out.at$r1,
-            margin = 0.1)
+                                     margin = 0.1)
         kp <- karyoploteR::kpPlotBigWig(kp, data = DNA.binding[i], ymax = "visible.region",
-            r0 = at$r0, r1 = at$r1, col = colors[i])
+                                        r0 = at$r0, r1 = at$r1, col = colors[i])
         computed.ymax <- ceiling(kp$latest.plot$computed.values$ymax)
         karyoploteR::kpAxis(kp, ymin = 0, ymax = computed.ymax, tick.pos = computed.ymax,
-            r0 = at$r0, r1 = at$r1, cex = axis.number.font)
+                            r0 = at$r0, r1 = at$r1, cex = axis.number.font)
         karyoploteR::kpAddLabels(kp, labels = names(DNA.binding)[i], r0 = at$r0,
-            r1 = at$r1, cex = chromatin.label.font, label.margin = chromatin.label.margin)
+                                 r1 = at$r1, cex = chromatin.label.font, label.margin = chromatin.label.margin)
+      }
     }
 }
 
 
+# library(AnnotationHub)
+# ah = AnnotationHub()
+# epiFiles <- query(ah , c("EpigenomeRoadMap", roadmap.epigenome.id, "BigWig", "pval.signal.bigwig"))
+# epiFiles <- epiFiles[!grepl("imputed", epiFiles$title)]
+#
+# DNA.binding <- character(0)
+# for(id in seq_along(epiFiles$title)){
+#   file <- epiFiles$title[id]
+#   start <- unlist(gregexpr("-", file)) + 1
+#   end <- unlist(gregexpr("pval", file)) - 2
+#   protein.name <- substring(file, start, end)
+#   DNA.binding[protein.name] <- epiFiles$ah_id[id]
+# }
+
+# Plot two lines encompassing the differentially methylated CpG probes
+# karyoploteR :: kpSegments(kp, chr=chr_name, x0=x[which(y!=0)]-20,
+# x1=x[which(y!=0)]-20, y0=rep(r0_DMValue, length(x[which(y!=0)])), y1
+# =rep(1, length(x[which(y!=0)]))) karyoploteR :: kpSegments(kp,
+# chr=chr_name, x0=x[which(y!=0)]+20, x1=x[which(y!=0)]+20,
+# y0=rep(r0_DMValue, length(x[which(y!=0)])), y1 =rep(1,
+# length(x[which(y!=0)])))

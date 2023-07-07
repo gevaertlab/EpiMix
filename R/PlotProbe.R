@@ -4,7 +4,8 @@
 #' @param probe.name character string indicating the CpG probe name.
 #' @param EpiMixResults  resulting list object returned from EpiMix.
 #' @param met.platform  character string indicating the type of micro-array where the DNA methylation data were collected.Can be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'
-#' @param roadmap.epigenome.id character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'
+#' @param roadmap.epigenome.id character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'. If the value is empty (""), no histone modifications plot will show.\
+#' Note: Keep this value empty if using the Windows system, since this feature is not supported in Windows.
 #' @param numFlankingGenes numeric value indicating the number of flanking genes to be plotted with the CpG probe. Default: 20 (10 gene upstream and 10 gene downstream).
 #' @param left.gene.margin  numeric value indicating the number of extra nucleotide bases to be plotted on the left side of the image. Default: 10000.
 #' @param right.gene.margin numeric value indicating the number of extra nucleotide bases to be plotted on the right side of the image. Default: 10000.
@@ -205,41 +206,43 @@ EpiMix_PlotProbe <- function(probe.name, EpiMixResults, met.platform = "HM450", 
 
 
     # Plot histone marks and DNase1 sensitivity
-    cat("Retrieving signal intensity of histone marks and DNase sensitivity from RoadmapEpigenomics...\n")
-    # Construct a vector with urls of the bigwig files
-    base_url <- "https://egg2.wustl.edu/roadmap/data/byFileType/signal/consolidated/macs2signal/pval/"
-    urlData <- RCurl::getURL(base_url)
-    urlData2 <- unlist(strsplit(urlData, "\\n"))
-    filenames <- as.matrix(urlData2[grep(roadmap.epigenome.id, urlData2)])
-    filenames <- unlist(strsplit(filenames, ">|<"))
-    filenames <- filenames[grep(roadmap.epigenome.id, filenames)]
-    filenames <- filenames[-grep("a href", filenames)]
-    DNA.binding <- character(0)
-    for (file in filenames) {
-        start <- unlist(gregexpr("-", file)) + 1
-        end <- unlist(gregexpr("pval", file)) - 2
-        protein.name <- substring(file, start, end)
-        DNA.binding[protein.name] <- paste0(base_url, file)
-    }
+    if(length(roadmap.epigenome.id) > 0){
+      cat("Retrieving signal intensity of histone marks and DNase sensitivity from RoadmapEpigenomics...\n")
+      # Construct a vector with urls of the bigwig files
+      base_url <- "https://egg2.wustl.edu/roadmap/data/byFileType/signal/consolidated/macs2signal/pval/"
+      urlData <- RCurl::getURL(base_url)
+      urlData2 <- unlist(strsplit(urlData, "\\n"))
+      filenames <- as.matrix(urlData2[grep(roadmap.epigenome.id, urlData2)])
+      filenames <- unlist(strsplit(filenames, ">|<"))
+      filenames <- filenames[grep(roadmap.epigenome.id, filenames)]
+      filenames <- filenames[-grep("a href", filenames)]
+      DNA.binding <- character(0)
+      for (file in filenames) {
+          start <- unlist(gregexpr("-", file)) + 1
+          end <- unlist(gregexpr("pval", file)) - 2
+          protein.name <- substring(file, start, end)
+          DNA.binding[protein.name] <- paste0(base_url, file)
+      }
 
-    r0_Histone <- 0
-    total.tracks <- length(DNA.binding)
-    colors <- RColorBrewer::brewer.pal(total.tracks, "Set3")
-    out.at <- karyoploteR::autotrack(1:total.tracks, total.tracks, margin = 0.3,
-        r0 = r0_Histone)
+      r0_Histone <- 0
+      total.tracks <- length(DNA.binding)
+      colors <- RColorBrewer::brewer.pal(total.tracks, "Set3")
+      out.at <- karyoploteR::autotrack(1:total.tracks, total.tracks, margin = 0.3,
+          r0 = r0_Histone)
 
-    karyoploteR::kpAddLabels(kp, labels = "Protein signals", r0 = out.at$r0, r1 = out.at$r1,
-        cex = y.label.font, srt = 90, pos = 1, label.margin = y.label.margin)
+      karyoploteR::kpAddLabels(kp, labels = "Protein signals", r0 = out.at$r0, r1 = out.at$r1,
+          cex = y.label.font, srt = 90, pos = 1, label.margin = y.label.margin)
 
-    for (i in seq_len(total.tracks)) {
-        at <- karyoploteR::autotrack(i, total.tracks, r0 = out.at$r0, r1 = out.at$r1,
-            margin = 0.1)
-        kp <- karyoploteR::kpPlotBigWig(kp, data = DNA.binding[i], ymax = "visible.region",
-            r0 = at$r0, r1 = at$r1, col = colors[i])
-        computed.ymax <- ceiling(kp$latest.plot$computed.values$ymax)
-        karyoploteR::kpAxis(kp, ymin = 0, ymax = computed.ymax, tick.pos = computed.ymax,
-            r0 = at$r0, r1 = at$r1, cex = axis.number.font)
-        karyoploteR::kpAddLabels(kp, labels = names(DNA.binding)[i], r0 = at$r0,
-            r1 = at$r1, cex = chromatin.label.font, label.margin = chromatin.label.margin)
+      for (i in seq_len(total.tracks)) {
+          at <- karyoploteR::autotrack(i, total.tracks, r0 = out.at$r0, r1 = out.at$r1,
+              margin = 0.1)
+          kp <- karyoploteR::kpPlotBigWig(kp, data = DNA.binding[i], ymax = "visible.region",
+              r0 = at$r0, r1 = at$r1, col = colors[i])
+          computed.ymax <- ceiling(kp$latest.plot$computed.values$ymax)
+          karyoploteR::kpAxis(kp, ymin = 0, ymax = computed.ymax, tick.pos = computed.ymax,
+              r0 = at$r0, r1 = at$r1, cex = axis.number.font)
+          karyoploteR::kpAddLabels(kp, labels = names(DNA.binding)[i], r0 = at$r0,
+              r1 = at$r1, cex = chromatin.label.font, label.margin = chromatin.label.margin)
+      }
     }
 }
