@@ -30,7 +30,8 @@ EpiMix_PlotGene(
 
 \item{met.platform}{character string indicating the type of the microarray where the DNA methylation data were collected. The value should be either 'HM27', 'HM450' or 'EPIC'. Default: 'HM450'}
 
-\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'}
+\item{roadmap.epigenome.id}{character string indicating the epigenome id (EID) for a reference tissue or cell type. Default: 'E002'. If the value is empty (""), no histone modifications plot will show.\
+Note: Keep this value empty if using the Windows system, since this feature is not supported in Windows.}
 
 \item{left.gene.margin}{numeric value indicating the number of extra nucleotide bases to be plotted on the left side of the target gene. Default: 10000.}
 

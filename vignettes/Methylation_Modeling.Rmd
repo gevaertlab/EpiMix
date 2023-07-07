@@ -429,7 +429,7 @@ plots$CorrelationPlot
 
 #### 7.2.1 Integrative visualization of the chromatin state, DNA methylation, and transcript structure of a specific gene
 
-```{r, message = FALSE, warning=FALSE, fig.show="hold", dev='png', out.width="110%", results = 'hide', fig.cap = "Integrative visualization of the chromatin state, DM values and the transcript structure of the *CCND2* gene. The differential methylation (DM) value represents the mean difference in beta values between the hypermethylated samples versus the normally methylated samples"}
+```{r, message = FALSE, warning=FALSE, eval=FALSE, fig.show="hold", dev='png', out.width="110%", results = 'hide', fig.cap = "Integrative visualization of the chromatin state, DM values and the transcript structure of the *CCND2* gene. The differential methylation (DM) value represents the mean difference in beta values between the hypermethylated samples versus the normally methylated samples"}
 library(karyoploteR)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(org.Hs.eg.db)
@@ -455,13 +455,16 @@ EpiMix_PlotGene(gene.name = gene.name,
 
 ```
 
+![Integrative visualization of the chromatin state, DM values and the transcript structure of the *CCND2* gene. The differential methylation (DM) value represents the mean difference in beta values between the hypermethylated samples versus the normally methylated samples.](figures/plot_gene.png)
+
+
 <br>
 
 #### 7.2.2 Plot the chromatin state of a CpG site and the expression of its nearby genes 
 
 This plot is used for visualization of a differentially methylated enhancer. The genes shown in red are the genes whose transcription was negatively associated with the DNA methylation of an enhancer. 
 
-```{r, message = FALSE, warning=FALSE, fig.show="hold", dev='png', out.width="110%", results = 'hide', fig.cap = "Integrative visualization of the chromatin state and the nearby genes of a differentially methylated CpG site"}
+```{r, message = FALSE, warning=FALSE, eval=FALSE, fig.show="hold", dev='png', out.width="110%", results = 'hide', fig.cap = "Integrative visualization of the chromatin state and the nearby genes of a differentially methylated CpG site"}
 # The CpG site to plot
 probe.name = "cg00374492"
 
@@ -482,6 +485,8 @@ EpiMix_PlotProbe(probe.name,
                  right.gene.margin = 10000  # right graph margin in nucleotide base pairs
                  )
 ```
+
+![Integrative visualization of the chromatin state and the nearby genes of a differentially methylated CpG site.](figures/plot_probe.png)
 <br>
 
 ## 8. Pathway enrichment analysis
@@ -492,6 +497,7 @@ EpiMix integrates the `clusterProfiler` R package to perform the function enrich
 
 ```{r, message=FALSE, warning=FALSE, results="hide"}
 library(clusterProfiler)
+library(org.Hs.eg.db)
 
 # We want to check the functions of both the hypo- and hypermethylated genes. 
 methylation.state = "all"
