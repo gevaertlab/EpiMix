@@ -60,7 +60,8 @@ Suggests:
   survminer,
   TxDb.Hsapiens.UCSC.hg19.knownGene,
   RUnit,
-  BiocGenerics
+  BiocGenerics,
+  multiMiR
 biocViews: Software, Epigenetics, Preprocessing, DNAMethylation, GeneExpression, DifferentialMethylation
 RoxygenNote: 7.2.3
 VignetteBuilder: knitr
