@@ -361,7 +361,7 @@ GEdirectories <- TCGA_Download_GeneExpression(CancerSite = "OV",
 
 + Preprocess gene expression data
 
-```{r, eval=TRUE, message = FALSE, results='hide'}
+```{r, message = FALSE, results='hide'}
 GEProcessedData <- TCGA_Preprocess_GeneExpression(CancerSite = "OV", 
                                                   MAdirectories = GEdirectories, 
                                                   mode = mode
