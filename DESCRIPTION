@@ -1,6 +1,6 @@
 Package: EpiMix
 Title: EpiMix: an integrative tool for the population-level analysis of DNA methylation 
-Version: 1.3.3
+Version: 1.3.4
 Description: EpiMix is a comprehensive tool for the integrative analysis of high-throughput DNA methylation data and gene expression data. EpiMix enables automated data downloading (from TCGA or GEO), preprocessing, methylation modeling, interactive visualization and functional annotation.To identify hypo- or hypermethylated CpG sites across physiological or pathological conditions, EpiMix uses a beta mixture modeling to identify the methylation states of each CpG probe and compares the methylation of the experimental group to the control group.The output from EpiMix is the functional DNA methylation that is predictive of gene expression. EpiMix incorporates specialized algorithms to identify functional DNA methylation at various genetic elements, including proximal cis-regulatory elements of protein-coding genes, distal enhancers, and genes encoding microRNAs and lncRNAs.
 Authors@R: c(
              person("Yuanning", "Zheng", email = c("eric2021@stanford.edu"), role = c("aut", "cre")),
