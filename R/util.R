@@ -37,12 +37,16 @@ utils::globalVariables(c("org.Hs.eg.db", "TxDb.Hsapiens.UCSC.hg19.knownGene", "i
     "."))
 
 #' The EpiMix_getInfiniumAnnotation function
-#' @description fetch the Infinium probe annotation from the seasameData library
-#' @param plat character string indicating the methylation platform
+#' @description fetch the Infinium probe annotation from the AnnotationHub
+#' @param plat character string indicating the methylation platform.
 #' @param genome character string indicating the version of genome build
-#'
+#' @export
 #' @return a GRange object of probe annotation
-#' @keywords internal
+#' @keywords annotation
+#' @examples
+#' \donttest{
+#' annot <- EpiMix_getInfiniumAnnotation(plat = "EPIC", genome = "hg38")
+#' }
 
 EpiMix_getInfiniumAnnotation <- function(plat = "EPIC", genome = "hg38") {
     hubID <- NULL

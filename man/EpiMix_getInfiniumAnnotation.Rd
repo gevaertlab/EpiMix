@@ -7,7 +7,7 @@
 EpiMix_getInfiniumAnnotation(plat = "EPIC", genome = "hg38")
 }
 \arguments{
-\item{plat}{character string indicating the methylation platform}
+\item{plat}{character string indicating the methylation platform.}
 
 \item{genome}{character string indicating the version of genome build}
 }
@@ -15,6 +15,11 @@ EpiMix_getInfiniumAnnotation(plat = "EPIC", genome = "hg38")
 a GRange object of probe annotation
 }
 \description{
-fetch the Infinium probe annotation from the seasameData library
+fetch the Infinium probe annotation from the AnnotationHub
 }
-\keyword{internal}
+\examples{
+\donttest{
+annot <- EpiMix_getInfiniumAnnotation(plat = "EPIC", genome = "hg38")
+}
+}
+\keyword{annotation}
